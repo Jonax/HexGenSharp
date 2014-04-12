@@ -31,7 +31,7 @@
 #ifndef HG14_BASE_H
 #   define HG14_BASE_H
 
-#   define PROGID "hexgen2010"
+#   define PROGID "hexgen2014"
 
     /* Guess at minimum C spec version feature detection */
 #   if defined(__STDC__)
@@ -80,7 +80,7 @@
 #   ifdef IS_C99
 #       define STRING_FUNC  __func__
 #   else
-#       define STRING_FUNC   "(unkown function)"
+#       define STRING_FUNC   "(unknown function)"
 #   endif
 
 
