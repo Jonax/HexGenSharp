@@ -30,7 +30,7 @@ Improving over all previous releases:
 
 **Custom terrain shape masks:** Generating maps in specific shapes is now possible using preset shapes or by loading a custom image as a mask.
 
-**LaTeX/PDF output:** Automatically generate a fancy PDF document of your world, documenting its seasons and major features, using `pdflatex`. Alternatively use the generated LaTeX files as the basis for your own worldbuilding document.
+**LaTeX/PDF output:** Automatically generate a fancy PDF document of your world and its features using `pdflatex`. Alternatively use the generated LaTeX files as the basis for your own worldbuilding document.
 
 
 <a name="download" />
@@ -99,7 +99,7 @@ Free Software License
  This is Free and Open Source Software. This means that you are allowed to
  share and modify the software at no cost, subject to the below agreement.
 
-    hexgen2010 world generator
+    hexgen2014 world generator
     
     Copyright (c) 2010, 2014 Ben Golightly <golightly.ben@googlemail.com>
     
