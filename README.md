@@ -87,7 +87,8 @@ Additional Ports
 * [Original Cobra version of the Hero Extant 2010 World Generator Prototype](http://www.tophatstuff.co.uk/archive.php?p=99)  
 Comes with a graphical user interface. The compiler for this version is no longer published, so you cannot modify the software unfortunately.
 
-* [Java port of the Hero Extant 2010 World Generator](https://github.com/avh4/hero-extant)
+* [Java port of the Hero Extant 2010 World Generator](https://github.com/avh4/hero-extant)  
+This is a Java version of the world generator backend suitable for including in Java projects.
 
 
 <a name="copying" />
