@@ -1,0 +1,7 @@
+.*
+!.gitignore
+*.anjuta
+*.pyc
+/stdout.txt
+/*.pdf
+/test.out
