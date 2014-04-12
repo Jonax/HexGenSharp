@@ -1,6 +1,6 @@
 /*
 
- core/clock.c - Implements a monotonic clock
+ src/clock.c - Implements a monotonic clock
  
  ------------------------------------------------------------------------------
  

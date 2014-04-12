@@ -61,6 +61,7 @@ typedef struct RNG RNG;
 RNG *RNGNew(unsigned int type, unsigned int seed); // use seed==0 to use time
 void RNGFree(RNG *r);
 
+unsigned int RNGSeed(RNG *r);
 void RNGRandomise(RNG *r, unsigned int seed);
 
 # define RNGFill(type, rng, buf, nmemb) RNGFill_##type(rng, buf, nmemb)

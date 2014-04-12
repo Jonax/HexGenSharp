@@ -26,7 +26,7 @@ New Features
 
 Improving over all previous releases:
 
-**Seasons!** Seasonal variation over the same map is now supported by varying latitude (to represent tilt), solar irradiance, wind direction and rainfall quantity. This is then factored into the rainfall simulation.
+**Seasons!** Seasonal variation over the same map is now supported by varying axial tilt, wind direction, and rainfall quantity. This is then factored into the rainfall simulation.
 
 **Improved terrain generation:** Terrain is generated using a new simplex noise method, replacing the old midpoint displacement algorithm. This gives greater flexibility in the shape of map and generates higher quality terrains, avoiding artifacts such as diamond shaped mountains or square shaped peninsulas.
 

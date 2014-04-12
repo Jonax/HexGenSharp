@@ -45,6 +45,7 @@
 struct RNG
 {
     unsigned int type;
+    unsigned int seed;
     
     union
     {
@@ -64,6 +65,8 @@ struct RNG
     void *impl_void_ptr;
 };
 
+
+unsigned int RNGSeed(RNG *r) { return r->seed; }
 
 
 RNG *RNGNew(unsigned int type, unsigned int seed)
@@ -93,6 +96,7 @@ RNG *RNGNew(unsigned int type, unsigned int seed)
     if (!r) { X(alloc_RNG); }
     
     r->type = type;
+    r->seed = seed;
     
     switch (type)
     {
@@ -141,7 +145,12 @@ void RNGRandomise(RNG *r, unsigned int seed)
             X(unkown_rng_type);
     }
     
-    err_unkown_rng_type: return;
+    r->seed = seed;
+    
+    return;
+    
+    err_unkown_rng_type:
+        exit(EXIT_FAILURE);
 }
 
 
@@ -158,6 +167,8 @@ void RNGFree(RNG *r)
     }
     
     free(r);
+    
+    return;
     
     err_unkown_rng_type:
         exit(EXIT_FAILURE);

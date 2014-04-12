@@ -45,10 +45,24 @@
  
  ------------------------------------------------------------------------------ 
  
+ SimplexNoise1234, Simplex noise with true analytic derivative in 1D to 4D.
+ 
+ Author: Stefan Gustavson, 2003-2005
+ Contact: stegu@itn.liu.se
+ 
+ This code was GPL licensed until February 2011.
+ As the original author of this code, I hereby
+ release it into the public domain.
+ 
+ Please feel free to use it for whatever you want.
+ Credit is appreciated where appropriate, and I also
+ appreciate being told where this code finds any use,
+ but you may do as you like.
+ 
+ ------------------------------------------------------------------------------ 
+ 
  stbi-1.33  - public domain image reader - Sean Barrett & Contributors
  stbiw-0.92 - public domain image writer - Sean Barrett
  
  http://www.nothings.org/
- 
- ------------------------------------------------------------------------------ 
  

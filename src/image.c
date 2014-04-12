@@ -1,6 +1,6 @@
 /*
  
- src/hexgen2014.c - main entry point
+ src/image.c - image handling
  
  ------------------------------------------------------------------------------
  
@@ -28,41 +28,42 @@
  
 */
 
-#include "base.h"
-#include "wgen/wgen.h"
+#include "base.h" // exceptions
+#include "image.h"
+#include "vendor/stb_image/stb_image_write.h"
 #include <stdio.h>
 
-int example(void)
+int ImageInit(Image *i, size2D s)
 {
-#   define SIZE Size2D(1024, 1024)
-    Generator generator;
-    World world;
-    Image image;
+    i->size = s;
+    i->bytes = (s.x * s.y);
     
-    if (!ImageInit(&image, SIZE)) { X(ImageInit); }
-    if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
-    if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
-    if (!WorldGenerateHeightmap(&world, 1.5, 0.25)) { X(WorldGenerateHeightmap); }
-    
-    WorldRender_Elevation_Raw(&world, &image);
-    ImageSaveTo(&image, "elevation-raw.png");
-    
-    WorldRender_Elevation_Quick(&world, &image);
-    ImageSaveTo(&image, "elevation-quick.png");
+    i->pixels = malloc(i->bytes * 4); // RGBA
+    if (!i->pixels) { X(alloc_pixels); }
     
     return 1;
     
-    err_WorldGenerateHeightmap:
-    err_WorldInit:
-    err_GeneratorInit:
-    err_ImageInit:
+    err_alloc_pixels:
         return 0;
 }
 
 
-int main(void)
+int ImageSaveTo(Image *i, const char *path)
 {
-    if (!example()) { return EXIT_FAILURE; }
+    if (!stbi_write_png
+    (
+        path,
+        (int) i->size.x,
+        (int) i->size.y,
+        4, // RGBA
+        i->pixels,
+        (int) (i->size.x) * 4 // stride in bytes
+    ))
+    { X2(stbi_write_png, path); }
     
-    return EXIT_SUCCESS;
+    return 1;
+    
+    err_stbi_write_png:
+        return 0;
 }
+

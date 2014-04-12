@@ -281,8 +281,17 @@ HEADER_FUNC line2D Line2D(int x0, int y0, int x1, int y1)
 }
 
 
-
 /* Auxiliary functions */
+HEADER_FUNC size_t max_size_t(size_t a, size_t b)
+{
+    if (a > b) { return a; } else { return b; }
+}
+
+HEADER_FUNC int Size2DEqual(size2D a, size2D b)
+{
+    return ((a.x == b.x) && (a.y == b.y));
+}
+
 HEADER_FUNC int Vector2D_HasMagnitude(vector2D v)
 {
     return (v.x | v.y);

@@ -4,4 +4,5 @@
 *.pyc
 /stdout.txt
 /*.pdf
+/*.png
 /test.out

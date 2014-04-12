@@ -1,6 +1,6 @@
 /*
  
- src/hexgen2014.c - main entry point
+ src/image.h - image handling
  
  ------------------------------------------------------------------------------
  
@@ -28,41 +28,28 @@
  
 */
 
-#include "base.h"
-#include "wgen/wgen.h"
-#include <stdio.h>
+#ifndef HG14_IMAGE_H
+#   define HG14_IMAGE_H
 
-int example(void)
+#include "types.h"
+
+# define RGBA_WRITE1(p,c) \
+    *(p++) = c; *p++ = c; *p++ = c; *p++ = 255;
+# define RGBA_WRITE3(p,r,g,b) \
+    *(p++) = r; *p++ = g; *p++ = b; *p++ = 255;
+# define RGBA_WRITE4(p,r,g,b,a) \
+    *(p++) = r; *p++ = g; *p++ = b; *p++ = a;
+
+typedef struct Image Image;
+
+struct Image
 {
-#   define SIZE Size2D(1024, 1024)
-    Generator generator;
-    World world;
-    Image image;
-    
-    if (!ImageInit(&image, SIZE)) { X(ImageInit); }
-    if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
-    if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
-    if (!WorldGenerateHeightmap(&world, 1.5, 0.25)) { X(WorldGenerateHeightmap); }
-    
-    WorldRender_Elevation_Raw(&world, &image);
-    ImageSaveTo(&image, "elevation-raw.png");
-    
-    WorldRender_Elevation_Quick(&world, &image);
-    ImageSaveTo(&image, "elevation-quick.png");
-    
-    return 1;
-    
-    err_WorldGenerateHeightmap:
-    err_WorldInit:
-    err_GeneratorInit:
-    err_ImageInit:
-        return 0;
-}
+    unsigned char *pixels;
+    size2D size;
+    size_t bytes;
+};
 
+int ImageInit(Image *i, size2D size);
+int ImageSaveTo(Image *i, const char *path);
 
-int main(void)
-{
-    if (!example()) { return EXIT_FAILURE; }
-    
-    return EXIT_SUCCESS;
-}
+#endif
