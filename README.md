@@ -3,6 +3,8 @@ hexgen2014 world generator
 
 This is a program for creating nice looking images of a world map. Maps are randomly generated using entirely procedural methods.
 
+**TODO SCREENSHOT**
+
 In 2010, the [Hero Extant World Generator prototype](http://www.tophatstuff.co.uk/archive.php?p=99) was released with a GUI for Windows. The world-generator backend has now been updated and converted into a command-line tool, *hexgen2014*, by the original author. Several improvements have been made. The tool is written in C and available as free & open source software for Windows and Linux.
 
 It is hoped that you will find this program useful as a standalone tool for your own projects. Alternatively you may like to use the world generator source code in your own programs.
