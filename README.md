@@ -7,6 +7,8 @@ In 2010, the [Hero Extant World Generator prototype](http://www.tophatstuff.co.u
 
 It is hoped that you will find this program useful as a standalone tool for your own projects. Alternatively you may like to use the world generator source code in your own programs.
 
+Updated versions of this software can always be found at the [website](http://www.heroextant.net/hexgen2014/) or on [GitHub](https://github.com/golightlyb/hexgen2014). Bug reports and feedback can be sent to hexgen2014@heroextant.net. Thanks!
+
 
 Contents
 --------
@@ -47,7 +49,7 @@ source code and documentation.
 
 Packages are available to download from the following locations:
 
-* http://www.heroextant.net/packages/hexgen2014/
+* http://www.heroextant.net/hexgen2014/pub/
 
 
 
@@ -68,7 +70,8 @@ clang
 Optional:
 [debian Multiarch](https://wiki.debian.org/Multiarch/HOWTO),
 [gcc-mingw-w64](https://packages.debian.org/wheezy/gcc-mingw-w64),
-[wine64](http://wiki.winehq.org/Wine64)
+[wine64](http://wiki.winehq.org/Wine64),
+[fabric](http://www.fabfile.org/)
 
 
     git clone https://github.com/golightlyb/hexgen2014
