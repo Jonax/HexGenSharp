@@ -48,17 +48,7 @@ int example(void)
     
     // for each season
     // {
-    WorldCalculateDirectSolarRadiation
-    (
-        &world.sunlight,
-         0.0, // yearly orbit normalised 0.0 to 1.0
-        23.5, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-         1.0, // where 1.0 is the mean radius of the Earth
-         1.0, // in astronomical units e.g. 1.0 AU for Earth
-         1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
-        GeoCoordinate(GEOCOORDINATE_UK), // see wgen/geocoordinates.h
-        1000.0 // km from north to south
-    );
+    //WorldCalculateDirectSolarRadiation
     // }
     
     WorldRender_Elevation_Raw(&world, &image);
@@ -79,7 +69,7 @@ int example(void)
             1.0, // where 1.0 is the mean radius of the Earth
             1.0, // in astronomical units e.g. 1.0 AU for Earth
             1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
-            GeoCoordinate(GEOCOORDINATE_UK), // see wgen/geocoordinates.h
+            GeoCoordinate(GEOCOORDINATE_SOUTH_AFRICA), // see wgen/geocoordinates.h
             1000.0 // km from north to south
         );
         
@@ -97,26 +87,6 @@ int example(void)
         WorldRender_Sunlight_Quick(&world, &image);
         ImageSaveTo(&image, filename1);
     }
-    
-    
-    // Equator with smaller seasons
-    WorldCalculateDirectSolarRadiation
-    (
-        &world.sunlight,
-         0.0, // yearly orbit normalised 0.0 to 1.0
-         5.0, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-         1.0, // where 1.0 is the mean radius of the Earth
-         1.0, // in astronomical units e.g. 1.0 AU for Earth
-         1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
-        GeoCoordinate("0.0N 0.0E"), // see wgen/geocoordinates.h
-        10000.0 // km from north to south
-    );
-    
-    WorldRender_Sunlight_Raw(&world, &image);
-    ImageSaveTo(&image, "sunlight-raw3.png");
-    
-    WorldRender_Sunlight_Quick(&world, &image);
-    ImageSaveTo(&image, "sunlight-quick3.png");
     
     return 1;
     

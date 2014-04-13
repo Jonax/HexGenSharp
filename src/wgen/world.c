@@ -208,7 +208,7 @@ int WorldCalculateDirectSolarRadiation
     
     printf
     (
-        "Day %.1f/365 radiance (W/m^2): "
+        "Orbit %.1f/1.0 radiance (W/m^2): "
         "low=%.2f "
         "high=%.2f "
         "(incident=%.2f)"
