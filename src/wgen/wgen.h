@@ -36,6 +36,7 @@
 # define SEASON_NAME_SIZE 32
 # define SEASON_DESC_SIZE 256
 
+#include "wgen/geocoordinates.h"
 #include "rng/rng.h"
 #include "clock.h"
 #include "types.h"
@@ -52,6 +53,7 @@ struct Doubles2D
     size_t elements;
     size2D size;
     double *values;
+    double maximum; // for denormalising
 };
 
 struct Season
@@ -62,6 +64,9 @@ struct Season
     double rainfall;        // normalised around 1.0
     double tilt;            // normalised around 0.0, shifts latitude up/down
     double wind_direction;  // normalised around 1.0, shifts wind
+    
+    Doubles2D temperature;  // normalised 0.0 - 1.0
+    
     Season *next;
 };
 
@@ -71,13 +76,15 @@ struct World
     char desc[WORLD_DESC_SIZE];
     Generator *generator;
     
-    // array of values for every point
-    Doubles2D elevation;       // normalised 0.0 - 1.0
-    Doubles2D temperature;     // normalised 0.0 - 1.0
+    double axial_tilt; // degrees; earth is 23.4°
+    double latitude[2]; // top and bottom; try 55°N to 50°N for UK weather
+    double radius; // normalised 1.0 is earth
     
-    //size2D elevation_size;
-    //size2D temperature_size;
-    //size2D direct_sunlight_size;
+    // array of values for every point
+    Doubles2D elevation;  // normalised 0.0 - 1.0
+    Doubles2D sunlight;   // direct radiance normalised 0.0 - 1.0
+    
+    Season *seasons;
 };
 
 struct Generator
@@ -86,9 +93,9 @@ struct Generator
     Clock clock;
     
     World world;
-    Season *seasons;
     
-    void *sampler_rsc; // used for custom heightmap shapes
+    double (*mask_sampler)(void *rsc, double x, double y, double w, double h);
+    void *mask_sampler_rsc; // used for custom heightmap shapes
 };
 
 
@@ -97,20 +104,41 @@ int Doubles2DInit(Doubles2D *d, size2D size);
 void Doubles2DTeardown(Doubles2D *d);
 void Doubles2DZeroFill(Doubles2D *d);
 void Doubles2DNormalise(Doubles2D *d);
+void Doubles2DNormaliseMaximum(Doubles2D *d);
 void Doubles2DClampFloorTo(Doubles2D *d, double min, double to);
 void Doubles2DClampCeilingTo(Doubles2D *d, double max, double to);
 void Doubles2DSquare(Doubles2D *d);
 
 // === generator.c ===
 int GeneratorInit(Generator *g, unsigned int seed);
+int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, double y, double w, double h));
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
 int WorldGenerateHeightmap(World *w, double energy, double turbulence);
+int WorldCalculateDirectSolarRadiation
+(
+    Doubles2D *buffer,
+    double orbit,               // yearly orbit normalised 0.0 to 1.0
+    double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+    double planet_radius,       // where 1.0 is the mean radius of the Earth
+    double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth
+    double solar_luminosity,    // 1.0 for our Sun ~= 3.846 × 10^26 Watts
+    geocoordinate map_center,   // see wgen/geocoordinates.h
+    double mapsize              // kilometres between Northern- and Southern-most points
+);
+
+// === mask.c ====
+double SampleDefault(void *p, double x, double y, double w, double h);
+double SampleCircleGradiant(void *p, double x, double y, double w, double h);
 
 // === render.c ===
 int WorldRender_Elevation_Raw(World *w, Image *i);
 int WorldRender_Elevation_Quick(World *w, Image *m);
 int WorldRender_Elevation_Nice(World *w, Image *m);
+
+int WorldRender_Sunlight_Raw(World *w, Image *i);
+int WorldRender_Sunlight_Quick(World *w, Image *i);
+int WorldRender_Sunlight_Nice(World *w, Image *i);
 
 #endif

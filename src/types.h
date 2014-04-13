@@ -282,6 +282,16 @@ HEADER_FUNC line2D Line2D(int x0, int y0, int x1, int y1)
 
 
 /* Auxiliary functions */
+HEADER_FUNC double radians(double deg)
+{
+    return (deg * 3.141592654 / 180.0);
+}
+
+HEADER_FUNC double degrees(double rad)
+{
+    return (rad * 180.0 / 3.141592654);
+}
+
 HEADER_FUNC size_t max_size_t(size_t a, size_t b)
 {
     if (a > b) { return a; } else { return b; }

@@ -34,21 +34,87 @@
 
 int example(void)
 {
-#   define SIZE Size2D(1024, 1024)
+#   define SIZE Size2D(512, 512)
     Generator generator;
     World world;
     Image image;
     
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
+    GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
+    
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
     if (!WorldGenerateHeightmap(&world, 1.5, 0.25)) { X(WorldGenerateHeightmap); }
+    
+    // for each season
+    // {
+    WorldCalculateDirectSolarRadiation
+    (
+        &world.sunlight,
+         0.0, // yearly orbit normalised 0.0 to 1.0
+        23.5, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+         1.0, // where 1.0 is the mean radius of the Earth
+         1.0, // in astronomical units e.g. 1.0 AU for Earth
+         1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
+        GeoCoordinate(GEOCOORDINATE_UK), // see wgen/geocoordinates.h
+        1000.0 // km from north to south
+    );
+    // }
     
     WorldRender_Elevation_Raw(&world, &image);
     ImageSaveTo(&image, "elevation-raw.png");
     
     WorldRender_Elevation_Quick(&world, &image);
     ImageSaveTo(&image, "elevation-quick.png");
+    
+    for (int i = 0; i < 12; i++)
+    {
+        double month = ((double) i) / 12.0;
+        
+        WorldCalculateDirectSolarRadiation
+        (
+            &world.sunlight,
+            month, // yearly orbit normalised 0.0 to 1.0
+            23.5, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+            1.0, // where 1.0 is the mean radius of the Earth
+            1.0, // in astronomical units e.g. 1.0 AU for Earth
+            1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
+            GeoCoordinate(GEOCOORDINATE_UK), // see wgen/geocoordinates.h
+            1000.0 // km from north to south
+        );
+        
+        char filename0[256];
+        char filename1[256];
+        
+        sprintf(filename0, "sunlight-raw-%d.png", i);
+        sprintf(filename1, "sunlight-quick-%d.png", i);
+        
+        WorldRender_Sunlight_Raw(&world, &image);
+        ImageSaveTo(&image, filename0);
+        
+        WorldRender_Sunlight_Quick(&world, &image);
+        ImageSaveTo(&image, filename1);
+    }
+    
+    
+    // Equator with smaller seasons
+    WorldCalculateDirectSolarRadiation
+    (
+        &world.sunlight,
+         0.0, // yearly orbit normalised 0.0 to 1.0
+         5.0, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+         1.0, // where 1.0 is the mean radius of the Earth
+         1.0, // in astronomical units e.g. 1.0 AU for Earth
+         1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
+        GeoCoordinate("0.0N 0.0E"), // see wgen/geocoordinates.h
+        10000.0 // km from north to south
+    );
+    
+    WorldRender_Sunlight_Raw(&world, &image);
+    ImageSaveTo(&image, "sunlight-raw3.png");
+    
+    WorldRender_Sunlight_Quick(&world, &image);
+    ImageSaveTo(&image, "sunlight-quick3.png");
     
     return 1;
     

@@ -26,11 +26,13 @@ New Features
 
 Improving over all previous releases:
 
-**Seasons!** Seasonal variation over the same map is now supported by varying axial tilt, wind direction, and rainfall quantity. This is then factored into the rainfall simulation.
+**Months and Seasons!** Seasonal variation over the same map is now supported by varying axial tilt, wind direction, and rainfall quantity. This is then factored into the rainfall simulation.
 
 **Improved terrain generation:** Terrain is generated using a new simplex noise method, replacing the old midpoint displacement algorithm. This gives greater flexibility in the shape of map and generates higher quality terrains, avoiding artifacts such as diamond shaped mountains or square shaped peninsulas.
 
 **Custom terrain shape masks:** Generating maps in specific shapes is now possible using preset shapes or by loading a custom image as a mask.
+
+**Greater control:** Do you want to simulate 12 months of sunlight patterns over a small island in the North? Or would you rather simulate a pattern of dry and monsoon seasons over a world-spanning continent baked in the glow of a giant sun? What about a garden world where a low axial tilt means mild seasons? Your imagination can go wild.
 
 **LaTeX/PDF output:** Automatically generate a fancy PDF document of your world and its features using `pdflatex`. Alternatively use the generated LaTeX files as the basis for your own worldbuilding document.
 

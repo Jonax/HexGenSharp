@@ -116,6 +116,36 @@ void Doubles2DNormalise(Doubles2D *d) // normalise all values between 0.0 & 1.0
         d->values[i] /= diff;
     }
     
+    d->maximum = max;
+    
+    return;
+    
+    err_bad_arg:
+        return;
+}
+
+
+void Doubles2DNormaliseMaximum(Doubles2D *d)
+{
+    // normalise all values between 0.0 & 1.0 but maintaining the full range
+    if (!d)         { X2(bad_arg, "NULL buffer pointer"); }
+    if (!d->values) { X2(bad_arg, "buffer uninitialised"); }
+    
+    double max = (double) (-DBL_MAX);
+    
+    for (size_t i = 0; i < d->elements; i++)
+    {
+        if (d->values[i] < 0.0) { d->values[i] = 0.0; }
+        if (d->values[i] > max) { max = d->values[i]; }
+    }
+    
+    for (size_t i = 0; i < d->elements; i++)
+    {
+        d->values[i] /= max;
+    }
+    
+    d->maximum = max;
+    
     return;
     
     err_bad_arg:

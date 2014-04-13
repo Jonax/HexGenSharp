@@ -8,8 +8,8 @@ int GeneratorInit(Generator *g, unsigned int seed)
     
     if (!ClockInit(&g->clock)) { X(ClockInit); }
     
-    g->seasons = NULL;
-    g->sampler_rsc = NULL;
+    g->mask_sampler = SampleDefault;
+    g->mask_sampler_rsc = NULL;
     
     return 1;
     
@@ -17,4 +17,15 @@ int GeneratorInit(Generator *g, unsigned int seed)
         RNGFree(g->rng);
     err_RNGNew:
         return 0;
+}
+
+
+int GeneratorUseMaskSampler
+(
+    Generator *g,
+    double (*sampler)(void *p, double x, double y, double w, double h)
+)
+{
+    g->mask_sampler = sampler;
+    return 1;
 }

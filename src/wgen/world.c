@@ -1,8 +1,8 @@
 #include "base.h"
 #include "wgen/wgen.h"
 #include "noise/simplexnoise1234.h"
-#include <math.h>
 #include <stdio.h>
+#include <math.h> // log
 
 int WorldInit(World *w, Generator *g, size2D size)
 {
@@ -14,13 +14,14 @@ int WorldInit(World *w, Generator *g, size2D size)
     *w->name = '\0';
     *w->desc = '\0';
     w->generator = g;
+    w->seasons   = NULL;
     
-    if (!Doubles2DInit(&w->elevation, size))   { X(Doubles2DInit_elevation); }
-    if (!Doubles2DInit(&w->temperature, size)) { X(Doubles2DInit_temperature); }
+    if (!Doubles2DInit(&w->elevation, size)) { X(Doubles2DInit_elevation); }
+    if (!Doubles2DInit(&w->sunlight,  size)) { X(Doubles2DInit_sunlight);  }
     
     return 1;
     
-    err_Doubles2DInit_temperature:
+    err_Doubles2DInit_sunlight:
         Doubles2DTeardown(&w->elevation);
     err_Doubles2DInit_elevation:
     err_bad_arg:
@@ -28,41 +29,11 @@ int WorldInit(World *w, Generator *g, size2D size)
 }
 
 
-static double SampleCircleGradiant
-(
-    void *p,
-    double x,
-    double y,
-    double w,
-    double h
-)
-{
-    UNUSED(p);
-    
-    /* Distance from center */
-    double dx = (w*0.5) - x;
-    double dy = (h*0.5) - y;
-    
-    /* Max radius for spherical falloff */
-    double maxr = w * 0.5;
-    
-    /* Distance of point from center (basic pythag) */
-    double r = sqrt((dx*dx) + (dy*dy));
-    
-    if (r > maxr) { return -1.0; }
-    double scale = -(r / maxr);
-    
-    return scale;
-}
-
-
-
 static void WorldApplyNoise
 (
     World *w,
     double energy,          // 0.6 to 3.0.  Higher == more islands
-    double turbulance,      // -0.5 to 1.0. Controls shape and contrast
-    double (*sample)(void *p, double x, double y, double w, double h)
+    double turbulance       // -0.5 to 1.0. Controls shape and contrast
 )
 {
     Doubles2D *elevation = &w->elevation;
@@ -113,7 +84,8 @@ static void WorldApplyNoise
         double x = (double) ((unsigned int) (i % elevation->size.x));
         
         elevation->values[i] = scale_r *
-            sample(w->generator->sampler_rsc, x, y, width, height);
+            (w->generator->mask_sampler(w->generator->mask_sampler_rsc,
+                                         x, y, width, height));
     }
     
     /* Octaves of noise */
@@ -151,7 +123,7 @@ int WorldGenerateHeightmap
     snoise_randomise(w->generator->rng);
     
     /* Apply several octaves of noise at a specific scale */
-    WorldApplyNoise(w, energy, turbulance, SampleCircleGradiant);
+    WorldApplyNoise(w, energy, turbulance);
     
     /* Normalise elevation between 0.0 to 1.0 */
     Doubles2DNormalise(&w->elevation);
@@ -161,6 +133,82 @@ int WorldGenerateHeightmap
     
     /* Normalise elevation again between 0.0 to 1.0 */
     Doubles2DNormalise(&w->elevation);
+    
+    return 1;
+}
+
+
+/* Model the direct solar radiation over the map at any given time (direct i.e.
+   sunshine). This EXCLUDES diffuse radiation (e.g. atmospheric scattering)
+   as this depends on current local cloud formation.
+   
+    With reference to:
+    
+    1. W. B. Stine and M. Geyer, "The Sun's Energy" in
+       *Power From The Sun*, (Online), 2001.
+       http://www.powerfromthesun.net/Book/chapter02/chapter02.html
+*/
+int WorldCalculateDirectSolarRadiation
+(
+    Doubles2D *buffer,
+    double orbit,               // yearly orbit normalised 0.0 to 1.0
+    double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+    double planet_radius,       // where 1.0 is the mean radius of the Earth
+    double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth
+    double solar_luminosity,    // 1.0 for our Sun ~= 3.846 × 10^26 Watts
+    geocoordinate map_center,   // see wgen/geocoordinates.h
+    double mapsize              // kilometres between Northern- and Southern-most points
+)
+{
+#   define PI 3.141592654
+    UNUSED(mapsize);
+    double *v = buffer->values;
+    
+    // Denormalise orbit to a specific day
+    double day = 365.0 * orbit;
+    
+    // Denormalise to SI units (metres, watts, etc).
+    double si_solar_luminosity  = solar_luminosity * 3.846 * pow(10.0, 26.0);
+    double si_distance_from_sun = distance_from_sun * 149600000000.0;
+    double si_planet_radius     = planet_radius * 6371000.0;
+    //double si_planet_surface_area = (4.0 * PI * si_planet_radius * si_planet_radius);
+    double si_surface_distance_from_sun = si_distance_from_sun - si_planet_radius;
+    
+    // Radiation on an imaginary surface at the planet's edge, perpendicular
+    // to the direction of rays from the sun, using Inverse Square Law.
+    double incident_radiance = si_solar_luminosity /
+        (4.0 * PI * si_surface_distance_from_sun * si_surface_distance_from_sun);
+    
+    for (size_t y = 0; y < buffer->size.y; y++)
+    {
+        // latitude of a point
+        double yrange = (double) y / (double) buffer->size.y; // 0.0 to 1.0
+        double yoffset = (yrange - 0.5) * mapsize;
+        
+        geocoordinate ypoint = GeoCoordinateTranslate(map_center,
+            planet_radius * 6371, yoffset, 180.0);
+        
+        // Radiation at a point
+        double phi = radians(LatitudeToDouble(GeoCoordinateLatitude(ypoint)));
+        double delta = asin(
+            sin(radians(axial_tilt)) *
+            sin(radians(360.0 * (day - 81.0) / 365.0))
+        );
+        
+        double angle = radians(90.0) - phi + delta;
+        double point_radiance = incident_radiance * sin(angle);
+        
+        for (size_t x = 0; x < buffer->size.x; x++)
+        {
+            *v++ = point_radiance;
+        }
+    }
+    
+    Doubles2DNormaliseMaximum(buffer);
+    
+    printf("Highest point solar radiance at %f AU on day %f/365 is %f W/m^2\n"
+           "Incident radiance was %f\n",
+        distance_from_sun, day, buffer->maximum, incident_radiance);
     
     return 1;
 }
