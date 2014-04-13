@@ -174,6 +174,9 @@ int WorldCalculateDirectSolarRadiation
     //double si_planet_surface_area = (4.0 * PI * si_planet_radius * si_planet_radius);
     double si_surface_distance_from_sun = si_distance_from_sun - si_planet_radius;
     
+    if (PI * si_planet_radius < mapsize * 1000.0)
+    { W("mapsize is too large for a planet of this radius!"); }
+    
     // Radiation on an imaginary surface at the planet's edge, perpendicular
     // to the direction of rays from the sun, using Inverse Square Law.
     double incident_radiance = si_solar_luminosity /

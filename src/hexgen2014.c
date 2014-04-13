@@ -69,8 +69,8 @@ int example(void)
             1.0, // where 1.0 is the mean radius of the Earth
             1.0, // in astronomical units e.g. 1.0 AU for Earth
             1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
-            GeoCoordinate(GEOCOORDINATE_SOUTH_AFRICA), // see wgen/geocoordinates.h
-            1000.0 // km from north to south
+            GeoCoordinate("0.0N 0.0E"), // see wgen/geocoordinates.h
+            16000.0 // km from north to south
         );
         
         char filename0[256];
