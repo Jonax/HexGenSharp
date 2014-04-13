@@ -129,7 +129,7 @@ int WorldGenerateHeightmap
     Doubles2DNormalise(&w->elevation);
     
     /* Create a sea floor by clamping anything below 0.6 */
-    Doubles2DClampFloorTo(&w->elevation, 0.6, 0.6);
+    Doubles2DClampFloorTo(&w->elevation, SEA_PROPORTION, SEA_PROPORTION);
     
     /* Normalise elevation again between 0.0 to 1.0 */
     Doubles2DNormalise(&w->elevation);
@@ -165,7 +165,7 @@ int WorldCalculateDirectSolarRadiation
     double *v = buffer->values;
     
     // Denormalise orbit to a specific day
-    double day = 365.0 * orbit;
+    double day = orbit;
     
     // Denormalise to SI units (metres, watts, etc).
     double si_solar_luminosity  = solar_luminosity * 3.846 * pow(10.0, 26.0);
@@ -192,7 +192,7 @@ int WorldCalculateDirectSolarRadiation
         double phi = radians(LatitudeToDouble(GeoCoordinateLatitude(ypoint)));
         double delta = asin(
             sin(radians(axial_tilt)) *
-            sin(radians(360.0 * (day - 81.0) / 365.0))
+            sin(2 * PI * (day - 0.222))
         );
         
         double angle = radians(90.0) - phi + delta;
@@ -206,9 +206,18 @@ int WorldCalculateDirectSolarRadiation
     
     Doubles2DNormaliseMaximum(buffer);
     
-    printf("Highest point solar radiance at %f AU on day %f/365 is %f W/m^2\n"
-           "Incident radiance was %f\n",
-        distance_from_sun, day, buffer->maximum, incident_radiance);
+    printf
+    (
+        "Day %.1f/365 radiance (W/m^2): "
+        "low=%.2f "
+        "high=%.2f "
+        "(incident=%.2f)"
+        "\n",
+        day,
+        buffer->minimum,
+        buffer->maximum,
+        incident_radiance
+    );
     
     return 1;
 }

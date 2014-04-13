@@ -39,7 +39,7 @@ int WorldRender_Elevation_Quick(World *w, Image *m)
         {
             double h = (*v++);
             
-            if (h < 0.15)
+            if (h < SEA_LEVEL)
             {
                 unsigned char r = (unsigned char) ( 32.0 + (32.0 * h));
                 unsigned char g = (unsigned char) ( 64.0 + (255.0 * h));
@@ -104,7 +104,7 @@ int WorldRender_Sunlight_Quick(World *w, Image *m)
             double h = (*e++);
             double i = (*s++);
             
-            if (h < 0.05)
+            if (h < SEA_LEVEL)
             {
                 RGBA_WRITE3(p, 32.0, 64.0, 128.0);
             }

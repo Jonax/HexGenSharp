@@ -85,9 +85,11 @@ int example(void)
         
         char filename0[256];
         char filename1[256];
+        char filename2[256];
         
         sprintf(filename0, "sunlight-raw-%d.png", i);
         sprintf(filename1, "sunlight-quick-%d.png", i);
+        sprintf(filename2, "fancy-%d.png", i);
         
         WorldRender_Sunlight_Raw(&world, &image);
         ImageSaveTo(&image, filename0);

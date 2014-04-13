@@ -36,6 +36,9 @@
 # define SEASON_NAME_SIZE 32
 # define SEASON_DESC_SIZE 256
 
+# define SEA_PROPORTION 0.6
+# define SEA_LEVEL      0.15
+
 #include "wgen/geocoordinates.h"
 #include "rng/rng.h"
 #include "clock.h"
@@ -53,7 +56,7 @@ struct Doubles2D
     size_t elements;
     size2D size;
     double *values;
-    double maximum; // for denormalising
+    double minimum, maximum; // for denormalising
 };
 
 struct Season
