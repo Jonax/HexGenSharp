@@ -149,7 +149,7 @@ int WindsimRender_Test(Windsim *w, Image *m)
         return 0;
 }
 
-/*
+
 static double Windsim_MaxDensity(Windsim *w)
 {
     Windcell *c = w->cell;
@@ -169,7 +169,7 @@ static double Windsim_MaxDensity(Windsim *w)
     
     return max;
 }
-*/
+
 
 static double Windsim_MaxPressure(Windsim *w)
 {
@@ -212,6 +212,29 @@ static double Windsim_MaxForce(Windsim *w)
     
     return max;
 }
+
+
+int WindsimRender_Density(Windsim *w, Image *m)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1)];
+    unsigned char *p = m->pixels;
+    
+    double max = Windsim_MaxDensity(w);
+    
+    for (size_t y = 0; y < w->size.y; y++)
+    {
+        for (size_t x = 0; x < w->size.x; x++)
+        {
+            double v = c->density / max;
+            unsigned char b = (unsigned char) (255.0 * v);
+            RGBA_WRITE1(p, b);
+            c++;
+        }
+    }
+    
+    return 1;
+}
+
 
 
 int WindsimRender_Pressure(Windsim *w, Image *m)

@@ -78,6 +78,8 @@ void WindsimCellsInit(Windsim *sim, Windcell template)
 }
 
 
+double maxf(double a, double b) { if (a > b) { return a; } else { return b; } }
+
 #include <math.h>
 void WindsimStepCell(Windsim *sim, size_t i3D, size_t i2D, int x, int y, int z)
 {
@@ -122,42 +124,60 @@ void WindsimStepCell(Windsim *sim, size_t i3D, size_t i2D, int x, int y, int z)
     
     // Pressure force
     cell->force = 0.0;
-    for (int xw = -1; xw <= +1; xw++) {
+    int zw = 0;
+    //for (int zw = -1; zw <= +1; zw++) {
     for (int yw = -1; yw <= +1; yw++) {
-    for (int zw = -1; zw <= +1; zw++) {
+    for (int xw = -1; xw <= +1; xw++) {
+        int x2 = x; int y2 = y; int z2 = z;
         
+        if ((xw == -1) && (x == 0)) { x2 = (int) sim->size.x; }
+        if ((yw == -1) && (y == 0)) { y2 = (int) sim->size.y; }
         if ((zw == -1) && (z == 0)) { continue; }
+        if ((xw == +1) && (x == (int) sim->size.x - 1)) { x2 = -1; }
+        if ((yw == +1) && (y == (int) sim->size.y - 1)) { y2 = -1; }
         if ((zw == +1) && (z == (int) sim->size.z - 1)) { continue; }
-        if ((xw == -1) && (x == 0)) { continue; }
-        if ((yw == -1) && (y == 0)) { continue; }
-        if ((xw == +1) && (x == (int) sim->size.x - 1)) { continue; }
-        if ((yw == +1) && (y == (int) sim->size.y - 1)) { continue; }
+        if ((xw == 0) && (yw == 0) && (zw ==0)) { continue; }
         
         Windcell *neighbour = &sim->cell
-            [((zw + z) * (int) sim->size.x * (int) sim->size.y) +
-             ((yw + y) * (int) sim->size.x) +
-             (xw + x)];
+            [((zw + z2) * (int) sim->size.x * (int) sim->size.y) +
+             ((yw + y2) * (int) sim->size.x) +
+             (xw + x2)];
         
         double force =  (-1/cell->density) * (cell->pressure - neighbour->pressure);
         
-        cell->force += force;
-    }}}
+        // By Boyle's law P_1 x V_1 = P_2 x V_2
+        // density = mass / volume
+        // so P_1 x mass_1 / V_1 = P_2 x mass_2 / V_2
+        // we know P_1, P_2
+        // mass_1 : mass_2 must have the same ratio
+        
+        // but for now
+        if ((cell->density >= 0.01) && (force < 0.0))
+        {
+            neighbour->density += 0.01; cell->density -= 0.01;
+            WindcellPressurise(cell);
+            WindcellPressurise(neighbour);
+        }
+        // else { neighbour->density -= 0.05; cell->density += 0.05; }
+        
+        cell->force += maxf(cell->force, fabs(force));
+    }}
     
-    cell->force = fabs(cell->force);
+    //cell->force = fabs(cell->force);
 }
 
 #include <stdio.h>
-int WindsimRun(Windsim *sim)
+int WindsimRun(Windsim *sim, Image *img)
 {
     if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    printf("Wind simulation: 1000 iterations over %dx%dx%d\n",
+    printf("Wind simulation: 300 iterations over %dx%dx%d\n",
         (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 300; i++)
     {
-        if (i % 10 == 0) { printf("Windsim: %d/1000\n", i); }
+        if (i % 10 == 0) { printf("Windsim: %d/300\n", i); }
         
         size_t index3D = 0;
         
@@ -175,6 +195,20 @@ int WindsimRun(Windsim *sim)
                 }
             }
         }
+        
+        char filename1[256];char filename2[256];char filename3[256];
+        sprintf(filename1, ".windsim/pressure/windsim-pressure-%d.png", i);
+        sprintf(filename2, ".windsim/force/windsim-force-%d.png", i);
+        sprintf(filename3, ".windsim/density/windsim-density-%d.png", i);
+        
+        WindsimRender_Pressure(sim, img);
+        ImageSaveTo(img, filename1);
+        
+        WindsimRender_Force(sim, img);
+        ImageSaveTo(img, filename2);
+        
+        WindsimRender_Density(sim, img);
+        ImageSaveTo(img, filename3);
     }
     
     return 1;

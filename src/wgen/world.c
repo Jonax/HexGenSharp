@@ -341,6 +341,9 @@ int WorldCalculateDirectSolarRadiation
  * MECHANICS:
  * http://www.st-andrews.ac.uk/~dib2/climate/pressure.html (p = R r T)
  * http://en.wikipedia.org/wiki/Primitive_equations
+ * http://en.wikipedia.org/wiki/Barometric_formula
+ * http://en.wikipedia.org/wiki/Bernoulli%27s_equation
+ * http://en.wikipedia.org/wiki/Boyle's_law
  * 
  * BIOMES:
  * http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification

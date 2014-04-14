@@ -144,7 +144,7 @@ int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, d
 // === windsim.c ===
 int WindsimInit(Windsim *sim, World *w, size3D size);
 int WindsimSampleWorld(Windsim *sim);
-int WindsimRun(Windsim *sim);
+int WindsimRun(Windsim *sim, Image *img);
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
@@ -183,6 +183,6 @@ int WorldRender_Sunlight_Nice(World *w, Image *i);
 int WindsimRender_Test(Windsim *w, Image *m);
 int WindsimRender_Force(Windsim *w, Image *m);
 int WindsimRender_Pressure(Windsim *w, Image *m);
-int WindsimRender_SurfaceDensity(Windsim *w, Image *m);
+int WindsimRender_Density(Windsim *w, Image *m);
 
 #endif
