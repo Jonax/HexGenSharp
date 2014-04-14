@@ -61,6 +61,12 @@ int example(void)
         if (WorldLandmassAtRightEdge(&world))
             { printf("REJECT heightmap: landmass at right edge\n"); continue; }
         
+        if (WorldLandMassProportion(&world) < 0.10) // TODO user limit
+            { printf("REJECT heightmap: landmass proportion too low\n"); continue; }
+        
+        if (WorldLandMassProportion(&world) > 1.00) // TODO user limit
+            { printf("REJECT heightmap: landmass proportion too high\n"); continue; }
+        
         break;
     }
     

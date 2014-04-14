@@ -126,6 +126,7 @@ int WorldLandmassAtTopEdge(World *w);
 int WorldLandmassAtBottomEdge(World *w);
 int WorldLandmassAtLeftEdge(World *w);
 int WorldLandmassAtRightEdge(World *w);
+double WorldLandMassProportion(World *w);
 int WorldCalculateDirectSolarRadiation
 (
     Doubles2D *buffer,

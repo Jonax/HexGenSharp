@@ -196,6 +196,20 @@ int WorldLandmassAtRightEdge(World *w)
 }
 
 
+double WorldLandMassProportion(World *w)
+{
+    unsigned int count = 0;
+    double *v = w->elevation.values;
+    
+    for (size_t i = 0; i < w->elevation.elements; i++, v++)
+    {
+        if (*v > SEA_LEVEL) { count++; }
+    }
+    
+    return (((double) count) / ((double) w->elevation.elements));
+}
+
+
 /* Model the direct solar radiation over the map at any given time (direct i.e.
    sunshine). This EXCLUDES diffuse radiation (e.g. atmospheric scattering)
    as this depends on current local cloud formation.
