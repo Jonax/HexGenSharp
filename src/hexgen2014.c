@@ -37,16 +37,20 @@ int example(void)
 #   define SIZE Size2D(512, 512)
     Generator generator;
     World world;
-    Image image;
+    Windsim windsim;
+    Image image, image_windsim;
     
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
+    if (!ImageInit(&image_windsim, Size2D(128, 128))) { X(ImageInit); }
+    
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
+    if (!WindsimInit(&windsim, &world, Size3D(128, 128, 16))) { X(WindsimInit); }
     
     while (1)
     {
-        if (!WorldGenerateHeightmap(&world, 1.5, 0.25))
+        if (!WorldGenerateHeightmap(&world, 1.5, 0.25)) //1.5, 0.25))
             { X(WorldGenerateHeightmap); }
         
         if (WorldLandmassAtTopEdge(&world))
@@ -81,7 +85,7 @@ int example(void)
     WorldRender_Elevation_Quick(&world, &image);
     ImageSaveTo(&image, "elevation-quick.png");
     
-    for (int i = 0; i < 12; i++)
+    for (int i = 0; i < 1; i++)
     {
         double month = ((double) i) / 12.0;
         
@@ -101,20 +105,33 @@ int example(void)
         char filename0[256];
         char filename1[256];
         char filename2[256];
+        char filename3[256];
+        char filename4[256];
         
         sprintf(filename0, "sunlight-raw-%d.png", i);
         sprintf(filename1, "sunlight-quick-%d.png", i);
         sprintf(filename2, "fancy-%d.png", i);
+        sprintf(filename3, "windsim-pressure-%d.png", i);
+        sprintf(filename4, "windsim-force-%d.png", i);
         
         WorldRender_Sunlight_Raw(&world, &image);
         ImageSaveTo(&image, filename0);
         
         WorldRender_Sunlight_Quick(&world, &image);
         ImageSaveTo(&image, filename1);
+        
+        WindsimRun(&windsim);
+        
+        WindsimRender_Pressure(&windsim, &image_windsim);
+        ImageSaveTo(&image_windsim, filename3);
+        
+        WindsimRender_Force(&windsim, &image_windsim);
+        ImageSaveTo(&image_windsim, filename4);
     }
     
     return 1;
     
+    err_WindsimInit:
     err_WorldGenerateHeightmap:
     err_WorldInit:
     err_GeneratorInit:

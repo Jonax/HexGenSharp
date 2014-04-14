@@ -52,6 +52,8 @@ typedef struct Generator Generator;
 typedef struct Season    Season;
 typedef struct Doubles2D Doubles2D;
 typedef struct World     World;
+typedef struct Windsim   Windsim;
+typedef struct Windcell  Windcell;
 
 struct Doubles2D
 {
@@ -104,6 +106,25 @@ struct Generator
     void *mask_sampler_rsc; // used for custom heightmap shapes
 };
 
+struct Windcell
+{
+    double density;
+    double temperature;
+    double moisture;
+    double pressure;
+    double force;
+};
+
+struct Windsim
+{
+    World *world;
+    size3D size;
+    size_t elements;
+    Doubles2D elevation; // resampled with less detail
+    Doubles2D sunlight;  // resampled with less detail
+    Windcell *cell;
+};
+
 
 // === doubles2D.c ===
 int Doubles2DInit(Doubles2D *d, size2D size);
@@ -114,10 +135,16 @@ void Doubles2DNormaliseMaximum(Doubles2D *d);
 void Doubles2DClampFloorTo(Doubles2D *d, double min, double to);
 void Doubles2DClampCeilingTo(Doubles2D *d, double max, double to);
 void Doubles2DSquare(Doubles2D *d);
+int Doubles2DDownsample(Doubles2D *dest, Doubles2D *src);
 
 // === generator.c ===
 int GeneratorInit(Generator *g, unsigned int seed);
 int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, double y, double w, double h));
+
+// === windsim.c ===
+int WindsimInit(Windsim *sim, World *w, size3D size);
+int WindsimSampleWorld(Windsim *sim);
+int WindsimRun(Windsim *sim);
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
@@ -152,5 +179,10 @@ int WorldRender_Elevation_Nice(World *w, Image *m);
 int WorldRender_Sunlight_Raw(World *w, Image *i);
 int WorldRender_Sunlight_Quick(World *w, Image *i);
 int WorldRender_Sunlight_Nice(World *w, Image *i);
+
+int WindsimRender_Test(Windsim *w, Image *m);
+int WindsimRender_Force(Windsim *w, Image *m);
+int WindsimRender_Pressure(Windsim *w, Image *m);
+int WindsimRender_SurfaceDensity(Windsim *w, Image *m);
 
 #endif

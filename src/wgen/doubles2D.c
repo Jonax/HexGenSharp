@@ -182,3 +182,48 @@ void Doubles2DSquare(Doubles2D *d)
         d->values[i] *= d->values[i];
     }
 }
+
+
+static double average(Doubles2D *d, size_t x, size_t y, size_t w, size_t h)
+{
+    double avg = 0;
+    
+    for (size_t i = y * h; i < ((y * h) + h); i++)
+    {
+        for (size_t j = x * w; j < ((x * w) + w); j++)
+        {
+            avg += d->values[(i * d->size.x) + j];
+        }
+    }
+    
+    avg /= ((double) (w * h));
+    return avg;
+}
+
+
+int Doubles2DDownsample(Doubles2D *dest, Doubles2D *src)
+{
+    if (dest->size.x > src->size.x) { X(src_width_too_small); }
+    if (dest->size.y > src->size.y) { X(src_height_too_small); }
+    
+    double *v = dest->values;
+    size_t xs = src->size.x / dest->size.x;
+    size_t ys = src->size.y / dest->size.y;
+    
+    for (size_t y = 0; y < dest->size.y; y++)
+    {
+        for (size_t x = 0; x < dest->size.x; x++)
+        {
+            *v++ = average(src, x, y, xs, ys);
+        }
+    }
+    
+    dest->maximum = src->maximum;
+    dest->minimum = src->minimum;
+    
+    return 1;
+    
+    err_src_height_too_small:
+    err_src_width_too_small:
+        return 0;
+}

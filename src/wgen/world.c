@@ -103,6 +103,13 @@ static void WorldApplyNoise
             double turb1 = fabs(snoise2(x * scale * 7.0, y * scale * 7.0));
             double turb = turb0 * turb1 * turbulance;
             
+            /* micro trubulance for defined mountains */
+            /*if (i == 3)
+            {
+                turb *= 10.0;
+            }
+            */
+            
             elevation->values[j] += scale_r *
                 (snoise2(x * scale, y * scale) + turb);
         }
@@ -301,6 +308,8 @@ int WorldCalculateDirectSolarRadiation
 
 /* WIND:
  * 
+ * http://www.srh.noaa.gov/jetstream/synoptic/wind.htm
+ * 
  * For day/night cycle (not implemented in hexgen2014: see Hero Extant proper).
  * http://en.wikipedia.org/wiki/Mountain_breeze_and_valley_breeze
  * http://en.wikipedia.org/wiki/Anabatic_wind
@@ -310,6 +319,7 @@ int WorldCalculateDirectSolarRadiation
  * http://en.wikipedia.org/wiki/Foehn_wind
  * http://en.wikipedia.org/wiki/Rain_shadow
  * http://en.wikipedia.org/wiki/Density_of_air
+ * * http://en.wikipedia.org/wiki/Atmospheric_pressure#Altitude_atmospheric_pressure_variation
  * 
  * Global:
  * http://en.wikipedia.org/wiki/Intertropical_convergence_zone
@@ -321,7 +331,6 @@ int WorldCalculateDirectSolarRadiation
  * Local:
  * http://en.wikipedia.org/wiki/Sea_breeze
  * http://en.wikipedia.org/wiki/Prevailing_winds#Circulation_in_elevated_regions
- * http://en.wikipedia.org/wiki/Atmospheric_pressure#Altitude_atmospheric_pressure_variation
  * 
  * RAIN:
  * 
@@ -331,6 +340,11 @@ int WorldCalculateDirectSolarRadiation
  * 
  * MECHANICS:
  * http://www.st-andrews.ac.uk/~dib2/climate/pressure.html (p = R r T)
+ * http://en.wikipedia.org/wiki/Primitive_equations
+ * 
+ * BIOMES:
+ * http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
+ * http://en.wikipedia.org/wiki/Holdridge_life_zones
  * 
  */
 
@@ -360,7 +374,8 @@ int WorldCalculateDirectSolarRadiation
  * 
  * High density air from a high elevation going down a slope causes
  * Katabatic winds due to acceleration due to gravity.
- * These can be cold and intense.
+ * These can be cold and intense. But sinking air warms which means it can
+ * hold more water.
  * 
  * -- So we can model the effects of mountains which give interesting wind
  *    speeds, temperatures, and rain shadows.
@@ -383,7 +398,7 @@ int WorldCalculateDirectSolarRadiation
  * -- Hot air increases pressure, so pushes out & up, reducing density in the
  *        current cell and increasing density in adjacent and (mainly) above
  *        cells (direction can be implicit due to adjacent cells of equal
- *        density all wanting to push up to a low density area
+ *        pressure all wanting to push up to a low pressure area
  *        instead of adjacently).
  * -- Cold air is denser, so pushes into less dense cells, reducing temperature.
  *        This is due to gravity. Pressure caused by density can be compared
@@ -391,8 +406,11 @@ int WorldCalculateDirectSolarRadiation
  * -- Cold cells can hold less moisture, so rain sooner and rain colder.
  * -- Raining reduces moisture held in a cell.
  * 
+ * The key point is WIND MOVEMENT IS CAUSED BY DIFFERENCES IN PRESSURE
+ * 
  * And at the end we want to display:
  * -- Wind speed at the surface cells.
+ * -- Air pressure.
  * -- Rainfall quantity & temperature.
  */
 

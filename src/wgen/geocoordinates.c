@@ -4,7 +4,7 @@
  
  ------------------------------------------------------------------------------
  
- Copyright (c) 2013 Ben Golightly <golightly.ben@googlemail.com>
+ Copyright (c) 2013 - 2014 Ben Golightly <golightly.ben@googlemail.com>
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -196,13 +196,6 @@ geocoordinate GeoCoordinateTranslate
     sprintf(msg, "%f° %f°", phi2, lambda2);
     
     return GeoCoordinate(msg);
-    
-    /*
-    var lat2 = Math.asin( Math.sin(lat1)*Math.cos(d/R) + 
-                  Math.cos(lat1)*Math.sin(d/R)*Math.cos(brng) );
-    var lon2 = lon1 + Math.atan2(Math.sin(brng)*Math.sin(d/R)*Math.cos(lat1), 
-                         Math.cos(d/R)-Math.sin(lat1)*Math.sin(lat2));#
-                         */
 }
 
 
