@@ -42,9 +42,27 @@ int example(void)
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
-    
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
-    if (!WorldGenerateHeightmap(&world, 1.5, 0.25)) { X(WorldGenerateHeightmap); }
+    
+    while (1)
+    {
+        if (!WorldGenerateHeightmap(&world, 1.5, 0.25))
+            { X(WorldGenerateHeightmap); }
+        
+        if (WorldLandmassAtTopEdge(&world))
+            { printf("REJECT heightmap: landmass at top edge\n"); continue; }
+        
+        if (WorldLandmassAtBottomEdge(&world))
+            { printf("REJECT heightmap: landmass at bottom edge\n"); continue; }
+        
+        if (WorldLandmassAtLeftEdge(&world))
+            { printf("REJECT heightmap: landmass at left edge\n"); continue; }
+        
+        if (WorldLandmassAtRightEdge(&world))
+            { printf("REJECT heightmap: landmass at right edge\n"); continue; }
+        
+        break;
+    }
     
     // for each season
     // {
@@ -65,12 +83,13 @@ int example(void)
         (
             &world.sunlight,
             month, // yearly orbit normalised 0.0 to 1.0
-            23.5, // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+            NORTHERN_SOLSTICE_EARTH, // when northern solstice occurs in orbit
+            SEASONAL_TILT_EARTH, // degrees - severity of seasons
             1.0, // where 1.0 is the mean radius of the Earth
-            1.0, // in astronomical units e.g. 1.0 AU for Earth
-            1.0, // 1.0 for our Sun ~= 3.846 × 10^26 Watts
-            GeoCoordinate("0.0N 0.0E"), // see wgen/geocoordinates.h
-            16000.0 // km from north to south
+            1.0, // distance from sun in astronomical units e.g. 1.0 AU for Earth
+            1.0, // luminosity relative to 1.0 for our Sun ~= 3.846 × 10^26 Watts
+            GeoCoordinate(GEOCOORDINATE_UK), // land position see wgen/geocoordinates.h
+            1000.0 // km from north to south of map
         );
         
         char filename0[256];

@@ -39,6 +39,9 @@
 # define SEA_PROPORTION 0.6
 # define SEA_LEVEL      0.15
 
+# define NORTHERN_SOLSTICE_EARTH 0.222
+# define SEASONAL_TILT_EARTH 23.5
+
 #include "wgen/geocoordinates.h"
 #include "rng/rng.h"
 #include "clock.h"
@@ -119,10 +122,15 @@ int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, d
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
 int WorldGenerateHeightmap(World *w, double energy, double turbulence);
+int WorldLandmassAtTopEdge(World *w);
+int WorldLandmassAtBottomEdge(World *w);
+int WorldLandmassAtLeftEdge(World *w);
+int WorldLandmassAtRightEdge(World *w);
 int WorldCalculateDirectSolarRadiation
 (
     Doubles2D *buffer,
     double orbit,               // yearly orbit normalised 0.0 to 1.0
+    double northern_solstace,   // point in orbit where this occurs (Earth is at 0.222)
     double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
     double planet_radius,       // where 1.0 is the mean radius of the Earth
     double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth

@@ -138,6 +138,64 @@ int WorldGenerateHeightmap
 }
 
 
+int WorldLandmassAtTopEdge(World *w)
+{
+    double *v = w->elevation.values;
+    
+    for (size_t x = 0; x < w->elevation.size.x; x++)
+    {
+        if (*v++ >= SEA_LEVEL) return 1;
+    }
+    
+    return 0;
+}
+
+
+int WorldLandmassAtBottomEdge(World *w)
+{
+    double *v = w->elevation.values;
+    v += (w->elevation.size.x * (w->elevation.size.y - 1));
+    
+    for (size_t x = 0; x < w->elevation.size.x; x++)
+    {
+        if (*v++ >= SEA_LEVEL) return 1;
+    }
+    
+    return 0;
+}
+
+
+int WorldLandmassAtLeftEdge(World *w)
+{
+    double *v = w->elevation.values;
+    
+    for (size_t y = 0; y < w->elevation.size.y; y++)
+    {
+        if (*v >= SEA_LEVEL) return 1;
+        
+        v += w->elevation.size.x;
+    }
+    
+    return 0;
+}
+
+
+int WorldLandmassAtRightEdge(World *w)
+{
+    double *v = w->elevation.values;
+    v += w->elevation.size.x - 1;
+    
+    for (size_t y = 0; y < w->elevation.size.y; y++)
+    {
+        if (*v >= SEA_LEVEL) return 1;
+        
+        v += w->elevation.size.x;
+    }
+    
+    return 0;
+}
+
+
 /* Model the direct solar radiation over the map at any given time (direct i.e.
    sunshine). This EXCLUDES diffuse radiation (e.g. atmospheric scattering)
    as this depends on current local cloud formation.
@@ -152,6 +210,7 @@ int WorldCalculateDirectSolarRadiation
 (
     Doubles2D *buffer,
     double orbit,               // yearly orbit normalised 0.0 to 1.0
+    double northern_solstace,   // point in orbit where this occurs (Earth is at 0.222)
     double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
     double planet_radius,       // where 1.0 is the mean radius of the Earth
     double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth
@@ -195,7 +254,7 @@ int WorldCalculateDirectSolarRadiation
         double phi = radians(LatitudeToDouble(GeoCoordinateLatitude(ypoint)));
         double delta = asin(
             sin(radians(axial_tilt)) *
-            sin(2 * PI * (day - 0.222))
+            sin(2 * PI * (day - northern_solstace))
         );
         
         double angle = radians(90.0) - phi + delta;
