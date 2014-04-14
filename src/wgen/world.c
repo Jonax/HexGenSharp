@@ -297,3 +297,109 @@ int WorldCalculateDirectSolarRadiation
     
     return 1;
 }
+
+
+/* WIND:
+ * 
+ * For day/night cycle (not implemented in hexgen2014: see Hero Extant proper).
+ * http://en.wikipedia.org/wiki/Mountain_breeze_and_valley_breeze
+ * http://en.wikipedia.org/wiki/Anabatic_wind
+ *
+ * Related to altitude & pressure: 
+ * http://en.wikipedia.org/wiki/Katabatic_wind
+ * http://en.wikipedia.org/wiki/Foehn_wind
+ * http://en.wikipedia.org/wiki/Rain_shadow
+ * http://en.wikipedia.org/wiki/Density_of_air
+ * 
+ * Global:
+ * http://en.wikipedia.org/wiki/Intertropical_convergence_zone
+ * http://en.wikipedia.org/wiki/Trade_wind
+ * http://en.wikipedia.org/wiki/Prevailing_winds
+ * http://en.wikipedia.org/wiki/Prevailing_winds#Effect_on_precipitation
+ * http://en.wikipedia.org/wiki/Wind_speed
+ *
+ * Local:
+ * http://en.wikipedia.org/wiki/Sea_breeze
+ * http://en.wikipedia.org/wiki/Prevailing_winds#Circulation_in_elevated_regions
+ * http://en.wikipedia.org/wiki/Atmospheric_pressure#Altitude_atmospheric_pressure_variation
+ * 
+ * RAIN:
+ * 
+ * http://en.wikipedia.org/wiki/Rain#Causes
+ * http://en.wikipedia.org/wiki/Dry_season
+ * http://en.wikipedia.org/wiki/Tropical_rain_belt
+ * 
+ * MECHANICS:
+ * http://www.st-andrews.ac.uk/~dib2/climate/pressure.html (p = R r T)
+ * 
+ */
+
+/*
+ * Let's first model the Tropical rain belt across the solar equator.
+ * This mechanism is convection.
+ * 
+ * Convection knowledge:
+ * Air is heated by solar radiation, especially along the solar equator.
+ * Hot air is less dense than cold air. Hot air rises. Cold air falls.
+ * Warmer air is able to retain more moisture than colder air.
+ * Moist air is less dense than dry air.
+ * When the warmer air is replaced by colder air, the colder air cannot absorb
+ *     moisture. The excess moisture coalesces and then falls as rain due to
+ *     gravity.
+ * 
+ * -- So due to tilt of the earth, we have a rain belt that moves to follow the
+ *    seasonal solar equator.
+ * 
+ * Altitude knowledge:
+ * Temperature falls with altitude.
+ * Air pressure falls linearly with altitude.
+ * Air density generally falls with altitude.
+ * Rising air cools, cool air increases in density, and condenses causing rain.
+ * Density of air is inversely proportional to temperature (cold = dense)
+ * This is more pronounced when a mountain forces air to rise quickly.
+ * 
+ * High density air from a high elevation going down a slope causes
+ * Katabatic winds due to acceleration due to gravity.
+ * These can be cold and intense.
+ * 
+ * -- So we can model the effects of mountains which give interesting wind
+ *    speeds, temperatures, and rain shadows.
+ * 
+ * Simulating air will need require measure of air moisture, air density, air
+ * temperature, air speed, and a 3D position.
+ * 
+ * We will need to model what happens when air collides - friction,
+ * elastic collision, etc.
+ * 
+ * Individual particles do not have density -- only a mass of air as a whole.
+ * If we have enough particles, density is implicit (i.e. density = particles
+ * divided by volume).
+ * 
+ * Let's try a simple model: cells across a grid of size 128x128x8
+ * 
+ * Convection:
+ * -- Each cell can be heated/cooled by the land beneath it.
+ * -- Each cell can receive moisture from the land beneath it.
+ * -- Hot air increases pressure, so pushes out & up, reducing density in the
+ *        current cell and increasing density in adjacent and (mainly) above
+ *        cells (direction can be implicit due to adjacent cells of equal
+ *        density all wanting to push up to a low density area
+ *        instead of adjacently).
+ * -- Cold air is denser, so pushes into less dense cells, reducing temperature.
+ *        This is due to gravity. Pressure caused by density can be compared
+ *        to pressure caused by kinetic energy from gravitational acceleration.
+ * -- Cold cells can hold less moisture, so rain sooner and rain colder.
+ * -- Raining reduces moisture held in a cell.
+ * 
+ * And at the end we want to display:
+ * -- Wind speed at the surface cells.
+ * -- Rainfall quantity & temperature.
+ */
+
+
+
+
+
+
+
+
