@@ -66,6 +66,8 @@ void WindcellPressurise(Windcell *cell)
     cell->pressure = (cell->density * cell->temperature * 287.0);
     // 287.0 should change based on moisture content
 }
+// pressure ~= (0.5 x density) x speed^2
+// speed = sqrt(2 * pressure / density)
 
 
 void WindsimCellsInit(Windsim *sim, Windcell template)
@@ -95,8 +97,10 @@ void WindsimStepCell(Windsim *sim, size_t i3D, size_t i2D, int x, int y, int z)
         // and multiply it by 0.6 for water's heat capacity.
         double elevation = sim->elevation.values[i2D];
         double kelvin = sim->sunlight.values[i2D] * sim->sunlight.maximum;
+        kelvin = sqrt(kelvin);
         
         if (elevation < SEA_LEVEL) { kelvin *= 0.6; }
+        kelvin += 270;
         
         // for thermal conductivity see http://www.engineeringtoolbox.com/air-properties-d_156.html
         // http://en.wikipedia.org/wiki/Fourier%27s_law#Fourier.27s_law
@@ -124,8 +128,8 @@ void WindsimStepCell(Windsim *sim, size_t i3D, size_t i2D, int x, int y, int z)
     
     // Pressure force
     cell->force = 0.0;
-    int zw = 0;
-    //for (int zw = -1; zw <= +1; zw++) {
+    //int zw = 0;
+    for (int zw = -1; zw <= +1; zw++) {
     for (int yw = -1; yw <= +1; yw++) {
     for (int xw = -1; xw <= +1; xw++) {
         int x2 = x; int y2 = y; int z2 = z;
@@ -149,19 +153,34 @@ void WindsimStepCell(Windsim *sim, size_t i3D, size_t i2D, int x, int y, int z)
         // density = mass / volume
         // so P_1 x mass_1 / V_1 = P_2 x mass_2 / V_2
         // we know P_1, P_2
-        // mass_1 : mass_2 must have the same ratio
+        // if P_1 > P_2, mass_1 down, mass_2 up
+        // if P_1 < P_2, mass_1 up, mass_2 down
+        // P_1 / P_2 = mass_2 / mass_1
+        // http://en.wikipedia.org/wiki/Work_(thermodynamics)#Pressure-volume_work
         
         // but for now
-        if ((cell->density >= 0.01) && (force < 0.0))
+        if (cell->density >= 0.01)
         {
-            neighbour->density += 0.01; cell->density -= 0.01;
+            double sign = 1;
+            if (force < 0.0) { sign = -1; }
+            //cell->density += 0.1 * sign;
+            //neighbour->density += 0.1 * -sign;
+            
+            /*
+            double temp_diff = cell->temperature - neighbour->temperature;
+            sign = 1;
+            if (temp_diff < 0.0) { sign = -1; }
+            cell->temperature += 0.1 * sign;
+            neighbour->temperature -= 0.1 * sign;
+            */
+            
             WindcellPressurise(cell);
             WindcellPressurise(neighbour);
         }
         // else { neighbour->density -= 0.05; cell->density += 0.05; }
         
         cell->force += maxf(cell->force, fabs(force));
-    }}
+    }}}
     
     //cell->force = fabs(cell->force);
 }
@@ -172,10 +191,10 @@ int WindsimRun(Windsim *sim, Image *img)
     if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    printf("Wind simulation: 300 iterations over %dx%dx%d\n",
+    printf("Wind simulation: 500 iterations over %dx%dx%d\n",
         (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     
-    for (int i = 0; i < 300; i++)
+    for (int i = 0; i < 500; i++)
     {
         if (i % 10 == 0) { printf("Windsim: %d/300\n", i); }
         
@@ -196,19 +215,45 @@ int WindsimRun(Windsim *sim, Image *img)
             }
         }
         
+        if
+        (
+            (i < 50) ||
+            ((i < 100) && (i % 5 == 0)) ||
+            ((i >= 100) && (i % 10 == 0))
+        )
+        {
         char filename1[256];char filename2[256];char filename3[256];
+        char filename4[256];char filename5[256];char filename6[256];
+        char filename7[256];char filename8[256];
         sprintf(filename1, ".windsim/pressure/windsim-pressure-%d.png", i);
         sprintf(filename2, ".windsim/force/windsim-force-%d.png", i);
         sprintf(filename3, ".windsim/density/windsim-density-%d.png", i);
+        sprintf(filename4, ".windsim2/pressure/windsim-pressure-%d.png", i);
+        sprintf(filename5, ".windsim2/force/windsim-force-%d.png", i);
+        sprintf(filename6, ".windsim2/density/windsim-density-%d.png", i);
+        sprintf(filename7, ".windsim/temperature/windsim-temperature-%d.png", i);
+        sprintf(filename8, ".windsim2/temperature/windsim-temperature-%d.png", i);
         
-        WindsimRender_Pressure(sim, img);
+        WindsimRender_Pressure(sim, img, 0);
         ImageSaveTo(img, filename1);
+        WindsimRender_Pressure(sim, img, 1);
+        ImageSaveTo(img, filename4);
         
-        WindsimRender_Force(sim, img);
+        WindsimRender_Force(sim, img, 0);
         ImageSaveTo(img, filename2);
+        WindsimRender_Force(sim, img, 1);
+        ImageSaveTo(img, filename5);
         
-        WindsimRender_Density(sim, img);
+        WindsimRender_Density(sim, img, 0);
         ImageSaveTo(img, filename3);
+        WindsimRender_Density(sim, img, 1);
+        ImageSaveTo(img, filename6);
+        
+        WindsimRender_Temperature(sim, img, 0);
+        ImageSaveTo(img, filename7);
+        WindsimRender_Temperature(sim, img, 1);
+        ImageSaveTo(img, filename8);
+        }
     }
     
     return 1;

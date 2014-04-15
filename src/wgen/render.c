@@ -150,13 +150,14 @@ int WindsimRender_Test(Windsim *w, Image *m)
 }
 
 
-static double Windsim_MaxDensity(Windsim *w)
+#include <math.h>
+static double Windsim_MaxDensity(Windsim *w, size_t layer)
 {
-    Windcell *c = w->cell;
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     double max = 0.0;
     
-    for (size_t z = 0; z < w->size.z; z++)
-    {
+    //for (size_t z = 0; z < w->size.z; z++)
+    //{
         for (size_t y = 0; y < w->size.y; y++)
         {
             for (size_t x = 0; x < w->size.x; x++)
@@ -165,19 +166,40 @@ static double Windsim_MaxDensity(Windsim *w)
                 if (density > max) { max = density; }
             }
         }
-    }
+    //}
     
     return max;
 }
 
 
-static double Windsim_MaxPressure(Windsim *w)
+static double Windsim_MinPressure(Windsim *w, size_t layer)
 {
-    Windcell *c = w->cell;
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
+    double min = 1500000000.0;
+    
+    //for (size_t z = 0; z < w->size.z; z++)
+    //{
+        for (size_t y = 0; y < w->size.y; y++)
+        {
+            for (size_t x = 0; x < w->size.x; x++)
+            {
+                double pressure = (c++)->pressure;
+                if (pressure < min) { min = pressure; }
+            }
+        }
+    //}
+    
+    return min;
+}
+
+
+static double Windsim_MaxPressure(Windsim *w, size_t layer)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     double max = 0.0;
     
-    for (size_t z = 0; z < w->size.z; z++)
-    {
+//    for (size_t z = 0; z < w->size.z; z++)
+    //{
         for (size_t y = 0; y < w->size.y; y++)
         {
             for (size_t x = 0; x < w->size.x; x++)
@@ -186,48 +208,123 @@ static double Windsim_MaxPressure(Windsim *w)
                 if (pressure > max) { max = pressure; }
             }
         }
-    }
+//    }
     
     return max;
 }
 
 
 
-static double Windsim_MaxForce(Windsim *w)
+static double Windsim_MaxForce(Windsim *w, size_t layer)
 {
-    Windcell *c = w->cell;
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     double max = 0.0;
     
-    for (size_t z = 0; z < w->size.z; z++)
-    {
+//    for (size_t z = 0; z < w->size.z; z++)
+    //{
         for (size_t y = 0; y < w->size.y; y++)
         {
             for (size_t x = 0; x < w->size.x; x++)
             {
-                double force = (c++)->force;
+                double force = fabs((c++)->force);
                 if (force > max) { max = force; }
             }
         }
-    }
+    //}
     
     return max;
 }
 
 
-int WindsimRender_Density(Windsim *w, Image *m)
+static double Windsim_MinForce(Windsim *w, size_t layer)
 {
-    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1)];
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
+    double min = 1000000000000.0;
+    
+    //for (size_t z = 0; z < w->size.z; z++)
+    //{
+        for (size_t y = 0; y < w->size.y; y++)
+        {
+            for (size_t x = 0; x < w->size.x; x++)
+            {
+                double force = fabs((c++)->force);
+                if (force < min) { min = force; }
+            }
+        }
+    //}
+    
+    return min;
+}
+
+
+double Windsim_MaxTemp(Windsim *w, size_t layer)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
+    double max = -1000.0;
+    
+    //for (size_t z = 0; z < w->size.z; z++)
+    //{
+        for (size_t y = 0; y < w->size.y; y++)
+        {
+            for (size_t x = 0; x < w->size.x; x++)
+            {
+                double temp = (c++)->temperature;
+                if (temp > max) { max = temp; }
+            }
+        }
+    //}
+    
+    return max;
+}
+
+
+double Windsim_MinTemp(Windsim *w, size_t layer)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
+    double min = 100000.0;
+    
+    //for (size_t z = 0; z < w->size.z; z++)
+    //{
+        for (size_t y = 0; y < w->size.y; y++)
+        {
+            for (size_t x = 0; x < w->size.x; x++)
+            {
+                double temp = (c++)->temperature;
+                if (temp < min) { min = temp; }
+            }
+        }
+    //}
+    
+    return min;
+}
+
+
+int WindsimRender_Density(Windsim *w, Image *m, size_t layer)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     unsigned char *p = m->pixels;
     
-    double max = Windsim_MaxDensity(w);
+    double max = Windsim_MaxDensity(w, layer);
     
     for (size_t y = 0; y < w->size.y; y++)
     {
         for (size_t x = 0; x < w->size.x; x++)
         {
-            double v = c->density / max;
-            unsigned char b = (unsigned char) (255.0 * v);
-            RGBA_WRITE1(p, b);
+            double v = c->density;
+            
+            unsigned char r = 0;
+            unsigned char g = 0;
+            unsigned char b = 0;
+            
+            if (v > max) { b = 255; r = 255; g = 255; }
+            else if (v < 0) { b = 255; r = 0; g = 128; }
+            else
+            {
+                r = (unsigned char) (255.0 * v / max);
+                b = (unsigned char) (255.0 * (1.0 - (v / max)));
+            }
+            
+            RGBA_WRITE3(p, r, g, b);
             c++;
         }
     }
@@ -237,20 +334,82 @@ int WindsimRender_Density(Windsim *w, Image *m)
 
 
 
-int WindsimRender_Pressure(Windsim *w, Image *m)
+int WindsimRender_Pressure(Windsim *w, Image *m, size_t layer)
 {
-    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1)];
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     unsigned char *p = m->pixels;
     
-    double max = Windsim_MaxPressure(w);
+    double min = Windsim_MinPressure(w, layer);
+    double max = Windsim_MaxPressure(w, layer);
+    //printf("min/max pressure: %f %f\n", min, max);
     
     for (size_t y = 0; y < w->size.y; y++)
     {
         for (size_t x = 0; x < w->size.x; x++)
         {
-            double v = c->pressure / max;
-            unsigned char b = (unsigned char) (255.0 * v);
-            RGBA_WRITE1(p, b);
+            double v = (c->pressure - min) / (max - min);
+            //double v = (c->pressure - 90000.0) / 10000.0;
+            unsigned char r, g, b;
+            
+            if (v > 1.0)
+            {
+                r = 255;
+                g = 128;
+                b = 128;
+            }
+            else if (v < 0.0)
+            {
+                b = 255.0;
+                g = 128;
+                r = 128;
+            }
+            else
+            {
+                r = (unsigned char) (255.0 * v);
+                g = 0;
+                b = 0;
+            }
+            RGBA_WRITE3(p, r, g, b);
+            c++;
+        }
+    }
+    
+    return 1;
+}
+
+#include <math.h> // fabs
+#include <stdio.h>
+int WindsimRender_Force(Windsim *w, Image *m, size_t layer)
+{
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
+    unsigned char *p = m->pixels;
+    
+    double max = 250000000.0;
+    double min = Windsim_MinForce(w, layer);
+    max = Windsim_MaxForce(w, w->size.z - 1 - layer);
+    //printf("MIN %f MAX %f\n", min, max);
+    
+    for (size_t y = 0; y < w->size.y; y++)
+    {
+        for (size_t x = 0; x < w->size.x; x++)
+        {
+            //double v = fabs(c->force) / max;
+            double v = //(c->force - min) / (max - min);
+            fabs(c->force) / max;
+            
+            unsigned char r = 0;
+            unsigned char g = 0;
+            unsigned char b = 0;
+            
+            if (v >= 1.0) { b = 255; r = 255; g = 255; }
+            else if (v < 0) { b = 255; r = 0; g = 0; }
+            else
+            {
+                r = (unsigned char) (255.0 * v); // v/ max
+                //b = (unsigned char) (255.0 * (1.0 - (v))); // v/max
+            }
+            
+            RGBA_WRITE3(p, r, g, b);
             c++;
         }
     }
@@ -259,20 +418,34 @@ int WindsimRender_Pressure(Windsim *w, Image *m)
 }
 
 
-int WindsimRender_Force(Windsim *w, Image *m)
+
+int WindsimRender_Temperature(Windsim *w, Image *m, size_t layer)
 {
-    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1)];
+    Windcell *c = &w->cell[w->size.x * w->size.y * (w->size.z - 1 - layer)];
     unsigned char *p = m->pixels;
     
-    double max = Windsim_MaxForce(w);
+    double min = 270;
+    double max = 500;
     
     for (size_t y = 0; y < w->size.y; y++)
     {
         for (size_t x = 0; x < w->size.x; x++)
         {
-            double v = c->force / max;
-            unsigned char b = (unsigned char) (255.0 * v);
-            RGBA_WRITE1(p, b);
+            double v = (c->temperature - min) / (max - min);
+            
+            unsigned char r = 0;
+            unsigned char g = 0;
+            unsigned char b = 0;
+            
+            if (v >= 1.0) { b = 255; r = 255; g = 255; }
+            else if (v < 0) { b = 0; r = 0; g = 0; }
+            else
+            {
+                r = (unsigned char) (255.0 * v); // v/max
+                b = (unsigned char) (255.0 * (1.0 - (v))); // v/max
+            }
+            
+            RGBA_WRITE3(p, r, g, b);
             c++;
         }
     }

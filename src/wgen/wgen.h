@@ -181,8 +181,9 @@ int WorldRender_Sunlight_Quick(World *w, Image *i);
 int WorldRender_Sunlight_Nice(World *w, Image *i);
 
 int WindsimRender_Test(Windsim *w, Image *m);
-int WindsimRender_Force(Windsim *w, Image *m);
-int WindsimRender_Pressure(Windsim *w, Image *m);
-int WindsimRender_Density(Windsim *w, Image *m);
+int WindsimRender_Force(Windsim *w, Image *m, size_t layer);
+int WindsimRender_Pressure(Windsim *w, Image *m, size_t layer);
+int WindsimRender_Density(Windsim *w, Image *m, size_t layer);
+int WindsimRender_Temperature(Windsim *w, Image *m, size_t layer);
 
 #endif
