@@ -136,15 +136,16 @@ int WindsimRender_Gravity(Windsim *w, Image *m)
 
     for (size_t z = 0; z < w->size.z; z++)
     {
-        size_t index = w->size.z - 1 - z;
+        size_t index = w->size.z - 1 - z; // grows upwards
         Windcell *cell = &w->cell[index];
         
-        unsigned char r = (unsigned char) (255.0 * cell->height / 2000000.0);
-        unsigned char g = (unsigned char) (255.0 * cell->gravity / 10.0);
-        unsigned char b = 0.0;
+        //unsigned char r = (unsigned char) (255.0 * cell->height / 100000.0);
+        unsigned char g = (unsigned char) (255.0 * (cell->gravity - 9.0));
+        unsigned char r = g;
+        unsigned char b = g;
         
-        printf("z %d: height %.2f m, gravity %.2f m/s^2\n",
-            (int) index, cell->height, cell->gravity);
+        /*printf("z %d: height %.2f m, gravity %.2f m/s^2\n",
+            (int) index, cell->height, cell->gravity);*/
         
         for (size_t i = 0; i < m->size.x * square; i++)
         {

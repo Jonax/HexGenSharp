@@ -309,6 +309,8 @@ int WorldCalculateDirectSolarRadiation
 /* WIND:
  * 
  * http://www.srh.noaa.gov/jetstream/synoptic/wind.htm
+ * http://www.aos.wisc.edu/~aalopez/aos101/wk11.html
+ * http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
  * 
  * For day/night cycle (not implemented in hexgen2014: see Hero Extant proper).
  * http://en.wikipedia.org/wiki/Mountain_breeze_and_valley_breeze

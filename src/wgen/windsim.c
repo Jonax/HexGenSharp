@@ -38,6 +38,7 @@ static FORCE_INLINE Windcell Cell
 
 void WindcellPressurise(Windcell *cell)
 {
+    // http://www.st-andrews.ac.uk/~dib2/climate/pressure.html
     cell->pressure = (cell->density * cell->temperature * 287.0);
     // 287.0 should change based on moisture content
 }
@@ -73,13 +74,63 @@ void WindsimStepCell(Windsim *sim, size_t z)
     
     double zf = (double) z; zf += 0.5;
     double ceil = (double)(sim->size.z - 1); ceil += 0.5;
-    double height = 2000000.0 * (zf / ceil); // m = 2km
+    double height = 100000.0 * (zf / ceil); // m = 100km
     double re = 6371000; // earth radius, m
     double gravity = 9.81 * Square(re /(re + height));
     
     cell->height = height;
     cell->gravity = gravity;
+    
+    // mass = volume * density
+    // force = mass * gravity
+    
+    // 1km by 1km by (100km / zcells ~= 100/16 km)
+    double mass = cell->density * (100000.0 / ceil) * 1000.0 * 1000.0;
+    
+    double force = mass * cell->gravity;
+    
+    WindcellPressurise(cell);
+    
+    double downforce = cell->pressure * (1000.0 * 1000.0) + force;
+    double upforce = cell->pressure * (1000.0 * 1000.0);
+    
+    
+    /*
+    printf("z%02d: h %.2f m, g %.2f m/s^2, density %.2f KG/m^3, mass %.2f kg, force of g %.2f N\n",
+        (int) z, height, gravity, cell->density, mass, force);
+    printf("     pressure: %.2f N/m^2 => %2f N vertical => %.2f N up, %.2f N down\n\n", cell->pressure,
+        cell->pressure * (1000.0 * 1000.0), upforce, downforce);
+    */
+    
+    printf("cell z%0d: h %.2f m, density %.2f KG/M^3, pressure %.2f\n",
+        (int) z, height, cell->density, cell->pressure);
+    
+    cell->upforce = upforce;
+    cell->downforce = downforce;
+    
+    
+    
+    // http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
 }
+
+
+void WindsimResolveCell(Windsim *sim, size_t z)
+{
+    Windcell *above = &sim->cell[z+1];
+    Windcell *below = &sim->cell[z];
+    
+    double diff = (above->downforce - below->upforce);
+    // > 0.0 means above pushes down
+    
+# define STEP_SIZE 0.05
+    
+    if (above->density < STEP_SIZE) { return; }
+    if (below->density < STEP_SIZE) { return; }
+    
+    if (diff > 0.0) { above->density -= STEP_SIZE; below->density += STEP_SIZE; }
+    else { above->density += STEP_SIZE; below->density -= STEP_SIZE; }
+}
+
 
 
 int WindsimRun(Windsim *sim, Image *img, int it)
@@ -87,7 +138,7 @@ int WindsimRun(Windsim *sim, Image *img, int it)
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    it = 1;
+    it = 200;
     printf("Wind simulation: %d iterations over %dx%dx%d\n",
         it, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     
@@ -95,9 +146,15 @@ int WindsimRun(Windsim *sim, Image *img, int it)
     {
         if (i % 10 == 0) { printf("Windsim: %d/%d\n", i, it); }
         
+        printf("\n\n=== PRESSURISE CELLS === \n");
         for (size_t z = 0; z < sim->size.z; z++)
         {
             WindsimStepCell(sim, z);
+        }
+        
+        for (size_t z = 0; z < sim->size.z - 1; z++)
+        {
+            WindsimResolveCell(sim, z);
         }
         
         if

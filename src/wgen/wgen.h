@@ -115,6 +115,8 @@ struct Windcell
     double force;
     double gravity;
     double height;
+    double upforce;
+    double downforce;
 };
 
 struct Windsim

@@ -41,7 +41,7 @@ int example(void)
     Image image, image_windsim;
     
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
-    if (!ImageInit(&image_windsim, Size2D(32, 512))) { X(ImageInit); }
+    if (!ImageInit(&image_windsim, Size2D(48, 768))) { X(ImageInit); }
     
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
@@ -97,15 +97,15 @@ int example(void)
             &world.sunlight,
             month, // yearly orbit normalised 0.0 to 1.0
             NORTHERN_SOLSTICE_EARTH, // when northern solstice occurs in orbit
-            //SEASONAL_TILT_EARTH, // degrees - severity of seasons
-            0.0,
+            SEASONAL_TILT_EARTH, // degrees - severity of seasons
+            //0.0,
             1.0, // where 1.0 is the mean radius of the Earth
             1.0, // distance from sun in astronomical units e.g. 1.0 AU for Earth
             1.0, // luminosity relative to 1.0 for our Sun ~= 3.846 × 10^26 Watts
             //GeoCoordinate(GEOCOORDINATE_UK), // land position see wgen/geocoordinates.h
             GeoCoordinate("0N 0E"),
             //1000.0 // km from north to south of map
-            20000.0
+            12000.0
         );
         
         char filename0[256];
