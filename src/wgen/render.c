@@ -126,6 +126,38 @@ int WorldRender_Sunlight_Quick(World *w, Image *m)
 }
 
 
+
+
+
+int WindsimRender_Gravity(Windsim *w, Image *m)
+{
+    unsigned int square = (unsigned int) (m->size.y / w->size.z);
+    unsigned char *p = m->pixels;
+
+    for (size_t z = 0; z < w->size.z; z++)
+    {
+        size_t index = w->size.z - 1 - z;
+        Windcell *cell = &w->cell[index];
+        
+        unsigned char r = (unsigned char) (255.0 * cell->height / 2000000.0);
+        unsigned char g = (unsigned char) (255.0 * cell->gravity / 10.0);
+        unsigned char b = 0.0;
+        
+        printf("z %d: height %.2f m, gravity %.2f m/s^2\n",
+            (int) index, cell->height, cell->gravity);
+        
+        for (size_t i = 0; i < m->size.x * square; i++)
+        {
+            RGBA_WRITE3(p, r, g, b);
+        }
+        
+    }
+    
+    return 1;
+}
+
+
+/*
 int WindsimRender_Test(Windsim *w, Image *m)
 {
     Doubles2D *e = &w->elevation;
@@ -452,3 +484,4 @@ int WindsimRender_Temperature(Windsim *w, Image *m, size_t layer)
     
     return 1;
 }
+*/

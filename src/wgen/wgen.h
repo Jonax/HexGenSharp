@@ -113,6 +113,8 @@ struct Windcell
     double moisture;
     double pressure;
     double force;
+    double gravity;
+    double height;
 };
 
 struct Windsim
@@ -120,8 +122,6 @@ struct Windsim
     World *world;
     size3D size;
     size_t elements;
-    Doubles2D elevation; // resampled with less detail
-    Doubles2D sunlight;  // resampled with less detail
     Windcell *cell;
 };
 
@@ -144,7 +144,8 @@ int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, d
 // === windsim.c ===
 int WindsimInit(Windsim *sim, World *w, size3D size);
 int WindsimSampleWorld(Windsim *sim);
-int WindsimRun(Windsim *sim, Image *img);
+int WindsimRun(Windsim *sim, Image *img, int it);
+int Windsim1D(Windsim *sim, World *w, size3D size);
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
@@ -181,9 +182,10 @@ int WorldRender_Sunlight_Quick(World *w, Image *i);
 int WorldRender_Sunlight_Nice(World *w, Image *i);
 
 int WindsimRender_Test(Windsim *w, Image *m);
-int WindsimRender_Force(Windsim *w, Image *m, size_t layer);
-int WindsimRender_Pressure(Windsim *w, Image *m, size_t layer);
-int WindsimRender_Density(Windsim *w, Image *m, size_t layer);
-int WindsimRender_Temperature(Windsim *w, Image *m, size_t layer);
+int WindsimRender_Gravity(Windsim *w, Image *m);
+int WindsimRender_Force(Windsim *w, Image *m);
+int WindsimRender_Pressure(Windsim *w, Image *m);
+int WindsimRender_Density(Windsim *w, Image *m);
+int WindsimRender_Temperature(Windsim *w, Image *m);
 
 #endif
