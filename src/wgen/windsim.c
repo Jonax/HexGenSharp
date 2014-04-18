@@ -108,7 +108,31 @@ void WindsimStepCell(Windsim *sim, size_t z)
     cell->upforce = upforce;
     cell->downforce = downforce;
     
+    // re radius
+    double a = 1000.0; // 1km
+    double b = re;
+    double c = re;
+    double theta; // angle between points 1km apart, radians
+#   define SQ(a) ((a) * (a))
+    theta =
+    acos(
+        (SQ(a) - SQ(b) - SQ(c)) /
+        (-2 * b * c)
+    );
+    printf("theta: %f\n", theta);
     
+    // distance between two points at the same angle, 100km above
+    double h = 100.0 * 1000.0;
+    b += h;
+    c += h;
+    a = sqrt(SQ(b) + SQ(c) - (2.0 * b * c * cos(theta))); // never actually need acos
+    
+    printf("100km above, %fm apart\n", a);
+    
+    // cell->torque = ||r|| ||F||;
+    // moment = force × distance
+    // at surface, moment = radius
+    // m_a + m_b = m_c => I_a + I_b = I_c
     
     // http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
 }
@@ -138,7 +162,7 @@ int WindsimRun(Windsim *sim, Image *img, int it)
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    it = 200;
+    it = 200; it = 1;
     printf("Wind simulation: %d iterations over %dx%dx%d\n",
         it, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     

@@ -117,6 +117,7 @@ struct Windcell
     double height;
     double upforce;
     double downforce;
+    double torque;
 };
 
 struct Windsim

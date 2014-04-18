@@ -1,10 +1,5 @@
-# This script uses the clang static analyser to perform some analysis on the
-# code base in order to catch errors.
-
-# To be honest it doesn't catch much that clang doesn't warn about anyway, but
-# it's good to have a working clang compile that fakes windows support using
-# dummy headers from src/vendor/dummy/ in order to get the warnings that gcc
-# misses. It also works as a minimal example of how to build the software.
+# This script uses the clang static analyser and cppcheck to perform
+# some static analysis on the code base in order to catch errors.
 
 echo -e "\n\nSCAN-BUILD::HEXGEN2014\n======================"
 
@@ -31,3 +26,6 @@ scan-build $OPTS clang $FLAGS -c $INPUTS
 rm *.o
 
 
+echo -e "\n\nCPPCHECK\n=============================="
+cppcheck --std=c99 --std=posix -f -j4 src 2> cppcheck.txt
+cat cppcheck.txt

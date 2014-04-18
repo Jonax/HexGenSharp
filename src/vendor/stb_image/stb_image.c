@@ -2,6 +2,9 @@
    when you control the images you're loading
                                      no warranty implied; use at your own risk
 
+   MODIFICATIONS:
+   Line ~3300: fix memory leak in tga loader error case (BSAG)
+
    QUICK NOTES:
       Primarily of interest to game developers and other people who can
           avoid problematic images and only need the trivial interface
@@ -3298,7 +3301,7 @@ static stbi_uc *tga_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       skip(s, tga_palette_start );
       //   load the palette
       tga_palette = (unsigned char*)malloc( tga_palette_len * tga_palette_bits / 8 );
-      if (!tga_palette) return epuc("outofmem", "Out of memory");
+      if (!tga_palette) { free(tga_data); return epuc("outofmem", "Out of memory"); }
       if (!getn(s, tga_palette, tga_palette_len * tga_palette_bits / 8 )) {
          free(tga_data);
          free(tga_palette);
