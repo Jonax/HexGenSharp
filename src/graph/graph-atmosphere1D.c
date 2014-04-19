@@ -226,8 +226,7 @@ int GraphAtmosphere1D
     const char *title,
     Image *buffer,
     size_t layers,
-    // TODO cells
-    vector3Df size // metres; size at surface and height as z.
+    GraphAtmosphere1DCell *cells
 )
 {
     Pen pen; PenInit(&pen, PEN_BLACK, 1.0);
@@ -326,6 +325,8 @@ int GraphAtmosphere1D
         // And extend a horizontal line
         if (i < layers)
         {
+            GraphAtmosphere1DCell cell = cells[i];
+            
             GraphDrawLine
             (
                 buffer,
@@ -344,8 +345,16 @@ int GraphAtmosphere1D
         
             // And write on it
             char str[512];
-            sprintf(str, "%d:",
-                (int) i);
+            sprintf(str,
+                "%.1fx%.1fx%.1f km, "
+                "density %.2f kg/m3, "
+                "pressure %.0f N/m^2",
+                cell.size.x / 1000.0,
+                cell.size.y / 1000.0,
+                cell.size.z / 1000.0,
+                cell.density,
+                cell.pressure
+            );
             
             Write(buffer, &glyphs, &pen, Vector2Df(x1 + 32.0, y1 - 16.0), str);
         }

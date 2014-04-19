@@ -47,6 +47,7 @@
 #include "clock.h"
 #include "types.h"
 #include "image.h"
+#include "graph/graph.h"
 
 typedef struct Generator Generator;
 typedef struct Season    Season;
@@ -126,6 +127,7 @@ struct Windsim
     size3D size;
     size_t elements;
     Windcell *cell;
+    GraphAtmosphere1DCell *graphAtmosphere1DCell;
 };
 
 

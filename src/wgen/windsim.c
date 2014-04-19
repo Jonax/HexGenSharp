@@ -11,8 +11,13 @@ int Windsim1D(Windsim *sim, World *w, size3D size)
     sim->cell = malloc(sizeof(Windcell) * sim->elements);
     if (!sim->cell) { X(alloc_sim_cells); }
     
+    sim->graphAtmosphere1DCell = malloc(sizeof(GraphAtmosphere1DCell) * sim->elements);
+    if (!sim->graphAtmosphere1DCell) { X(alloc_graph_cells); }
+    
     return 1;
     
+    err_alloc_graph_cells:
+        free(sim->cell);
     err_alloc_sim_cells:
         return 0;
 }
@@ -71,6 +76,7 @@ FORCE_INLINE double Square(double a)
 void WindsimStepCell(Windsim *sim, size_t z)
 {
     Windcell *cell = &sim->cell[z];
+    GraphAtmosphere1DCell *graphCell = &sim->graphAtmosphere1DCell[z];
     
     double zf = (double) z; zf += 0.5;
     double ceil = (double)(sim->size.z - 1); ceil += 0.5;
@@ -128,6 +134,12 @@ void WindsimStepCell(Windsim *sim, size_t z)
     
     printf("100km above, %fm apart\n", a);
     
+    graphCell->size.x = 1000.0;
+    graphCell->size.y = 1000.0;
+    graphCell->size.z = (100000.0 / ceil);
+    graphCell->density = cell->density;
+    graphCell->pressure = cell->pressure;
+    
     // cell->torque = ||r|| ||F||;
     // moment = force × distance
     // at surface, moment = radius
@@ -145,7 +157,7 @@ void WindsimResolveCell(Windsim *sim, size_t z)
     double diff = (above->downforce - below->upforce);
     // > 0.0 means above pushes down
     
-# define STEP_SIZE 0.05
+# define STEP_SIZE 0.025
     
     if (above->density < STEP_SIZE) { return; }
     if (below->density < STEP_SIZE) { return; }
@@ -161,7 +173,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int it)
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    it = 401;
+    it = 1001;
     //it = 1;
     printf("Wind simulation: %d iterations over %dx%dx%d\n",
         it, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
@@ -204,7 +216,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int it)
             char title[256];
             sprintf(title, "iteration %d/%d", i, it - 1);
         
-            GraphAtmosphere1D(title, graph, 16, Vector3Df(1000, 1000, 100 * 1000));
+            GraphAtmosphere1D(title, graph, sim->elements, sim->graphAtmosphere1DCell);
             ImageSaveTo(graph, filegraph);
         }
         

@@ -34,13 +34,21 @@
 #include "types.h" // e.g. size2D, vector3Df
 #include "image.h"
 
+typedef struct GraphAtmosphere1DCell GraphAtmosphere1DCell;
+
+struct GraphAtmosphere1DCell
+{
+    vector3Df size;
+    double density;
+    double pressure;
+};
+
 int GraphAtmosphere1D
 (
     const char *title,
     Image *buffer,
     size_t layers,
-    // TODO cells
-    vector3Df size // metres; size at surface and height as z.
+    GraphAtmosphere1DCell *cells
 );
 
 #endif
