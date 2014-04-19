@@ -42,14 +42,14 @@ int example(void)
     
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
     if (!ImageInit(&image_windsim, Size2D(48, 768))) { X(ImageInit); }
-    if (!ImageInit(&image_graph, Size2D(1024 + 512, 768))) { X(ImageInit); }
+    if (!ImageInit(&image_graph, Size2D(2048, 1024))) { X(ImageInit); }
     
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
     //if (!WindsimInit(&windsim, &world, Size3D(256, 256, 16))) { X(WindsimInit); }
     
-    Windsim1D(&windsim, &world, Size3D(0, 0, 16));
+    Windsim1D(&windsim, &world, Size3D(0, 0, 32));
     WindsimRun(&windsim,  &image_windsim, &image_graph, 100);
     
     while (1)

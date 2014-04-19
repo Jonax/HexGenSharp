@@ -348,7 +348,7 @@ int GraphAtmosphere1D
             sprintf(str,
                 "%.1fx%.1fx%.1f km, "
                 "density %.2f kg/m3, "
-                "pressure %.0f N/m^2",
+                "pressure %.0f N/m^2, ",
                 cell.size.x / 1000.0,
                 cell.size.y / 1000.0,
                 cell.size.z / 1000.0,

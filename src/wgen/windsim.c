@@ -86,6 +86,7 @@ void WindsimStepCell(Windsim *sim, size_t z)
     
     cell->height = height;
     cell->gravity = gravity;
+    cell->volume = (100000.0 / ceil) * 1000.0 * 1000.0;
     
     // mass = volume * density
     // force = mass * gravity
@@ -124,7 +125,7 @@ void WindsimStepCell(Windsim *sim, size_t z)
         (SQ(a) - SQ(b) - SQ(c)) /
         (-2 * b * c)
     );
-    printf("theta: %f\n", theta);
+    //printf("theta: %f\n", theta);
     
     // distance between two points at the same angle, 100km above
     double h = 100.0 * 1000.0;
@@ -132,7 +133,7 @@ void WindsimStepCell(Windsim *sim, size_t z)
     c += h;
     a = sqrt(SQ(b) + SQ(c) - (2.0 * b * c * cos(theta))); // never actually need acos
     
-    printf("100km above, %fm apart\n", a);
+    //printf("100km above, %fm apart\n", a);
     
     graphCell->size.x = 1000.0;
     graphCell->size.y = 1000.0;
@@ -149,21 +150,61 @@ void WindsimStepCell(Windsim *sim, size_t z)
 }
 
 
+
+double ChangeMass(Windcell *cell, double ammount)
+{
+    double mass = cell->density * cell->volume;
+    mass += ammount;
+    if (mass < 0) { ammount -= mass; mass = 0; }
+    cell->density = mass / cell->volume;
+    
+    return ammount;
+}
+
 void WindsimResolveCell(Windsim *sim, size_t z)
 {
     Windcell *above = &sim->cell[z+1];
     Windcell *below = &sim->cell[z];
+    Windcell *from, *to;
+    
+    double ceil = (double)(sim->size.z - 1); ceil += 0.5;
     
     double diff = (above->downforce - below->upforce);
+    
+    if (diff > 0.0) { from = above; to = below; }
+    else { from = below; to = above; }
     // > 0.0 means above pushes down
     
-# define STEP_SIZE 0.025
+    // diff is a vector force in N
+    
+    // f = ma
+    // so a = f/m
+    // now assume time = 1 second and completely make up some physics that
+    // probably isn't correct, but convert acceleration into distance
+    // and use that distance as a proportion of height to estimate what moves
+    double mass = from->density * from->volume;
+    if (mass < 1.0) { return; }
+    
+    double h = (100000.0 / ceil);
+    double d = diff / mass;
+    double proportion = d / h;
+    double transfer = fabs(proportion * mass);
+    transfer *= 10; // speed up
+    printf("%d->%d: force %.2f N means a transfer of proportion %.6f which = mass %.0f ton of %.0f ton\n",
+        (int) z + 1, (int) z, diff, proportion, transfer / 1000.0, mass / 1000.0);
+    
+    if (transfer > mass) { transfer = mass; }
+    ChangeMass(from, -transfer);
+    ChangeMass(to, transfer);
+    
+    /*
     
     if (above->density < STEP_SIZE) { return; }
     if (below->density < STEP_SIZE) { return; }
     
     if (diff > 0.0) { above->density -= STEP_SIZE; below->density += STEP_SIZE; }
     else { above->density += STEP_SIZE; below->density -= STEP_SIZE; }
+    */
 }
 
 
@@ -171,9 +212,9 @@ void WindsimResolveCell(Windsim *sim, size_t z)
 int WindsimRun(Windsim *sim, Image *img, Image *graph, int it)
 {
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
-    WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
+    WindsimCellsInit(sim, Cell(1.225 / 7.0, 273.15, 0.0));
     
-    it = 1001;
+    it = 5001;
     //it = 1;
     printf("Wind simulation: %d iterations over %dx%dx%d\n",
         it, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
@@ -211,7 +252,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int it)
         WindsimRender_Gravity(sim, img);
         ImageSaveTo(img, filename0);
         
-        if ((i % 50) == 0)
+        if ((i % 250) == 0)
         {
             char title[256];
             sprintf(title, "iteration %d/%d", i, it - 1);
