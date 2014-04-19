@@ -36,6 +36,8 @@
 #include <stdlib.h> // size_t
 #include "base.h" // HEADER_FUNC (static force inline)
 
+#define PI 3.141592654
+
 /*
  * Handy coordinates/vectors/scalars
  */

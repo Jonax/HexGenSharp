@@ -42,6 +42,8 @@
 # define NORTHERN_SOLSTICE_EARTH 0.222
 # define SEASONAL_TILT_EARTH 23.5
 
+# define WINDSIM_HEIGHT 100000.0 // 100km
+
 #include "wgen/geocoordinates.h"
 #include "rng/rng.h"
 #include "clock.h"
@@ -65,35 +67,29 @@ struct Doubles2D
     double minimum, maximum; // for denormalising
 };
 
-struct Season
-{
-    char name[SEASON_NAME_SIZE];
-    char desc[SEASON_DESC_SIZE];
-    
-    double rainfall;        // normalised around 1.0
-    double tilt;            // normalised around 0.0, shifts latitude up/down
-    double wind_direction;  // normalised around 1.0, shifts wind
-    
-    Doubles2D temperature;  // normalised 0.0 - 1.0
-    
-    Season *next;
-};
-
 struct World
 {
     char name[WORLD_NAME_SIZE];
     char desc[WORLD_DESC_SIZE];
     Generator *generator;
     
-    double axial_tilt; // degrees; earth is 23.4°
-    double latitude[2]; // top and bottom; try 55°N to 50°N for UK weather
-    double radius; // normalised 1.0 is earth
+    int defined_seasons;
+    double axial_tilt;          // degrees; earth is 23.4°
+    double northern_solstice;   // seasonal lag; point in orbit where this occurs (Earth is at 0.222)
+    
+    int defined_planet;
+    double radius;              // metres
+    double gravity;             // m/s^2
+    double distance_from_sun;   // in AU
+    double solar_luminosity;    // normalised relative to our sun at 1.0. Watts.
+    
+    int defined_area;
+    geocoordinate center;       // xy center of map on sphere
+    vector3Df dimension;        // surface width from top/bottom, left/right, floor/ceil
     
     // array of values for every point
     Doubles2D elevation;  // normalised 0.0 - 1.0
     Doubles2D sunlight;   // direct radiance normalised 0.0 - 1.0
-    
-    Season *seasons;
 };
 
 struct Generator
@@ -109,17 +105,23 @@ struct Generator
 
 struct Windcell
 {
-    double density;
+    // "Intrinsic"
+    double mass;
     double temperature;
     double moisture;
-    double pressure;
-    double force;
-    double gravity;
-    double height;
-    double upforce;
-    double downforce;
-    double torque;
+    double altitude;
+    vector3Df dimension; // of any cell
+    
+    // Derived
     double volume;
+    double volume_reciprocal;
+    double weight;
+    
+    // Forces
+    double force_up;
+    double force_down;
+    double force_north_south;
+    double force_east_west;
 };
 
 struct Windsim
@@ -127,7 +129,10 @@ struct Windsim
     World *world;
     size3D size;
     size_t elements;
+    double height; // metres
+    
     Windcell *cell;
+    
     GraphAtmosphere1DCell *graphAtmosphere1DCell;
 };
 
@@ -155,6 +160,30 @@ int Windsim1D(Windsim *sim, World *w, size3D size);
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);
+
+int WorldDefinePlanet
+(
+    World *w,
+    double radius,       // in metres e.g. 6371000.0
+    double gravity,      // gravity at surface, in e.g. 9.81 m/s^-2
+    double distance_sun, // in astronomical units e.g. 1.0 AU for Earth
+    double solar_luminosity // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+);
+
+int WorldDefineSeasons
+(
+    World *w,
+    double seasonal_tilt,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+    double northern_solstice // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
+);
+
+int WorldDefineArea
+(
+    World *w,
+    geocoordinate center,   // xy center of map on sphere
+    vector3Df dimension     // surface width from top/bottom, left/right, floor/ceil
+);
+
 int WorldGenerateHeightmap(World *w, double energy, double turbulence);
 int WorldLandmassAtTopEdge(World *w);
 int WorldLandmassAtBottomEdge(World *w);

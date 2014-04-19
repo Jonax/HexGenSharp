@@ -1,3 +1,33 @@
+/*
+ 
+ src/wgen/world.c - world model
+ 
+ ------------------------------------------------------------------------------
+ 
+ Copyright (c) 2010, 2013, 2014 Ben Golightly <golightly.ben@googlemail.com>
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ 
+ ------------------------------------------------------------------------------
+ 
+*/
+
 #include "base.h"
 #include "wgen/wgen.h"
 #include "noise/simplexnoise1234.h"
@@ -14,7 +44,10 @@ int WorldInit(World *w, Generator *g, size2D size)
     *w->name = '\0';
     *w->desc = '\0';
     w->generator = g;
-    w->seasons   = NULL;
+    
+    w->defined_planet = 0;
+    w->defined_seasons = 0;
+    w->defined_area = 0;
     
     if (!Doubles2DInit(&w->elevation, size)) { X(Doubles2DInit_elevation); }
     if (!Doubles2DInit(&w->sunlight,  size)) { X(Doubles2DInit_sunlight);  }
@@ -24,6 +57,93 @@ int WorldInit(World *w, Generator *g, size2D size)
     err_Doubles2DInit_sunlight:
         Doubles2DTeardown(&w->elevation);
     err_Doubles2DInit_elevation:
+    err_bad_arg:
+        return 0;
+}
+
+
+int WorldDefinePlanet
+(
+    World *w,
+    double radius,       // in metres e.g. 6371000.0
+    double gravity,      // gravity at surface, in e.g. 9.81 m/s^-2
+    double distance_sun, // in astronomical units e.g. 1.0 AU for Earth
+    double solar_luminosity // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+)
+{
+    if (!w)                      { X2(bad_arg, "NULL world pointer"); }
+    if (radius <= 0.0)           { X2(bad_arg, "radius must be > 0"); }
+    if (gravity <= 0.0)          { X2(bad_arg, "gravity must be > 0"); }
+    if (distance_sun <= 0.0)     { X2(bad_arg, "distance from sun must be > 0"); }
+    if (solar_luminosity <= 0.0) { X2(bad_arg, "solar_luminosity must be > 0"); }
+    
+    w->radius            = radius;
+    w->gravity           = gravity;
+    w->distance_from_sun = distance_sun;
+    w->solar_luminosity  = solar_luminosity;
+    w->defined_planet    = 1;
+    
+    return 1;
+    
+    err_bad_arg:
+        return 0;
+}
+
+
+int WorldDefineSeasons
+(
+    World *w,
+    double seasonal_tilt,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+    double northern_solstice // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
+)
+{
+    if (!w)                        { X2(bad_arg, "NULL world pointer"); }
+    if (seasonal_tilt < -180.0)    { X2(bad_arg, "tilt must be >= -180"); }
+    if (seasonal_tilt > +180.0)    { X2(bad_arg, "tilt must be <= 180"); }
+    if (northern_solstice <= -1.0) { X2(bad_arg, "northern solstice must be > -1.0"); }
+    if (northern_solstice >= +1.0) { X2(bad_arg, "northern solstice must be < 1.0"); }
+    
+    w->axial_tilt        = seasonal_tilt;
+    w->northern_solstice = northern_solstice;
+    w->defined_seasons   = 1;
+    
+    return 1;
+    
+    err_bad_arg:
+        return 0;
+}
+
+
+int WorldDefineArea
+(
+    World *w,
+    geocoordinate center,   // xy center of map on sphere
+    vector3Df dimension     // surface width from top/bottom, left/right, floor/ceil
+)
+{
+    if (!w)                          { X2(bad_arg, "NULL world pointer"); }
+    if (!GeoCoordinateValid(center)) { X2(bad_arg, "geocoordinate invalid"); }
+    if (dimension.x <= 0.0)          { X2(bad_arg, "dimension.x must be > 0"); }
+    if (dimension.y <= 0.0)          { X2(bad_arg, "dimension.y must be > 0"); }
+    if (dimension.z <= 0.0)          { X2(bad_arg, "dimension.z must be > 0"); }
+    if (!w->defined_planet)          { X2(bad_state, "WorldDefinePlanet first"); }
+    
+    double circumference = 2.0 * PI * w->radius;
+    if (circumference < dimension.x)
+        { X2(bad_dimension, "dimension.x is too large for the planet radius"); }
+    if (circumference < dimension.y)
+        { X2(bad_dimension, "dimension.y is too large for the planet radius"); }
+    if (dimension.z > 50 * 1000.0)
+        { X2(bad_dimension, "dimension.z is too large for an atmosphere simulation"); }
+    
+    w->center       = center;
+    w->dimension    = dimension;
+    w->defined_area = 1;
+    
+    return 1;
+    
+    err_bad_dimension:
+    err_bad_state:
     err_bad_arg:
         return 0;
 }
@@ -102,13 +222,6 @@ static void WorldApplyNoise
             double turb0 = fabs(snoise2(x * scale * 3.0, y * scale * 3.0));
             double turb1 = fabs(snoise2(x * scale * 7.0, y * scale * 7.0));
             double turb = turb0 * turb1 * turbulance;
-            
-            /* micro trubulance for defined mountains */
-            /*if (i == 3)
-            {
-                turb *= 10.0;
-            }
-            */
             
             elevation->values[j] += scale_r *
                 (snoise2(x * scale, y * scale) + turb);
@@ -240,7 +353,6 @@ int WorldCalculateDirectSolarRadiation
     double mapsize              // kilometres between Northern- and Southern-most points
 )
 {
-#   define PI 3.141592654
     UNUSED(mapsize);
     double *v = buffer->values;
     
@@ -304,125 +416,4 @@ int WorldCalculateDirectSolarRadiation
     
     return 1;
 }
-
-
-/* WIND:
- * 
- * http://www.srh.noaa.gov/jetstream/synoptic/wind.htm
- * http://www.aos.wisc.edu/~aalopez/aos101/wk11.html
- * http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
- * 
- * For day/night cycle (not implemented in hexgen2014: see Hero Extant proper).
- * http://en.wikipedia.org/wiki/Mountain_breeze_and_valley_breeze
- * http://en.wikipedia.org/wiki/Anabatic_wind
- *
- * Related to altitude & pressure: 
- * http://en.wikipedia.org/wiki/Katabatic_wind
- * http://en.wikipedia.org/wiki/Foehn_wind
- * http://en.wikipedia.org/wiki/Rain_shadow
- * http://en.wikipedia.org/wiki/Density_of_air
- * * http://en.wikipedia.org/wiki/Atmospheric_pressure#Altitude_atmospheric_pressure_variation
- * 
- * Global:
- * http://en.wikipedia.org/wiki/Intertropical_convergence_zone
- * http://en.wikipedia.org/wiki/Trade_wind
- * http://en.wikipedia.org/wiki/Prevailing_winds
- * http://en.wikipedia.org/wiki/Prevailing_winds#Effect_on_precipitation
- * http://en.wikipedia.org/wiki/Wind_speed
- *
- * Local:
- * http://en.wikipedia.org/wiki/Sea_breeze
- * http://en.wikipedia.org/wiki/Prevailing_winds#Circulation_in_elevated_regions
- * 
- * RAIN:
- * 
- * http://en.wikipedia.org/wiki/Rain#Causes
- * http://en.wikipedia.org/wiki/Dry_season
- * http://en.wikipedia.org/wiki/Tropical_rain_belt
- * 
- * MECHANICS:
- * http://www.st-andrews.ac.uk/~dib2/climate/pressure.html (p = R r T)
- * http://en.wikipedia.org/wiki/Primitive_equations
- * http://en.wikipedia.org/wiki/Barometric_formula
- * http://en.wikipedia.org/wiki/Bernoulli%27s_equation
- * http://en.wikipedia.org/wiki/Boyle's_law
- * 
- * BIOMES:
- * http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
- * http://en.wikipedia.org/wiki/Holdridge_life_zones
- * 
- */
-
-/*
- * Let's first model the Tropical rain belt across the solar equator.
- * This mechanism is convection.
- * 
- * Convection knowledge:
- * Air is heated by solar radiation, especially along the solar equator.
- * Hot air is less dense than cold air. Hot air rises. Cold air falls.
- * Warmer air is able to retain more moisture than colder air.
- * Moist air is less dense than dry air.
- * When the warmer air is replaced by colder air, the colder air cannot absorb
- *     moisture. The excess moisture coalesces and then falls as rain due to
- *     gravity.
- * 
- * -- So due to tilt of the earth, we have a rain belt that moves to follow the
- *    seasonal solar equator.
- * 
- * Altitude knowledge:
- * Temperature falls with altitude.
- * Air pressure falls linearly with altitude.
- * Air density generally falls with altitude.
- * Rising air cools, cool air increases in density, and condenses causing rain.
- * Density of air is inversely proportional to temperature (cold = dense)
- * This is more pronounced when a mountain forces air to rise quickly.
- * 
- * High density air from a high elevation going down a slope causes
- * Katabatic winds due to acceleration due to gravity.
- * These can be cold and intense. But sinking air warms which means it can
- * hold more water.
- * 
- * -- So we can model the effects of mountains which give interesting wind
- *    speeds, temperatures, and rain shadows.
- * 
- * Simulating air will need require measure of air moisture, air density, air
- * temperature, air speed, and a 3D position.
- * 
- * We will need to model what happens when air collides - friction,
- * elastic collision, etc.
- * 
- * Individual particles do not have density -- only a mass of air as a whole.
- * If we have enough particles, density is implicit (i.e. density = particles
- * divided by volume).
- * 
- * Let's try a simple model: cells across a grid of size 128x128x8
- * 
- * Convection:
- * -- Each cell can be heated/cooled by the land beneath it.
- * -- Each cell can receive moisture from the land beneath it.
- * -- Hot air increases pressure, so pushes out & up, reducing density in the
- *        current cell and increasing density in adjacent and (mainly) above
- *        cells (direction can be implicit due to adjacent cells of equal
- *        pressure all wanting to push up to a low pressure area
- *        instead of adjacently).
- * -- Cold air is denser, so pushes into less dense cells, reducing temperature.
- *        This is due to gravity. Pressure caused by density can be compared
- *        to pressure caused by kinetic energy from gravitational acceleration.
- * -- Cold cells can hold less moisture, so rain sooner and rain colder.
- * -- Raining reduces moisture held in a cell.
- * 
- * The key point is WIND MOVEMENT IS CAUSED BY DIFFERENCES IN PRESSURE
- * 
- * And at the end we want to display:
- * -- Wind speed at the surface cells.
- * -- Air pressure.
- * -- Rainfall quantity & temperature.
- */
-
-
-
-
-
-
-
 

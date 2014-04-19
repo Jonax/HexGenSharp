@@ -86,7 +86,7 @@ sexagesimal GeoCoordinateLatitude(geocoordinate p)
 
 
 HEADER_FUNC
-int ValidGeoCoordinate(geocoordinate p)
+int GeoCoordinateValid(geocoordinate p)
 {
     return p.valid;
 }

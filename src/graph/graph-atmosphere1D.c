@@ -346,9 +346,9 @@ int GraphAtmosphere1D
             // And write on it
             char str[512];
             sprintf(str,
-                "%.1fx%.1fx%.1f km, "
-                "density %.2f kg/m3, "
-                "pressure %.0f N/m^2, ",
+                "%.2fx%.2fx%.2f km, "
+                "density %.2f kg/m^3, "
+                "pressure %.0f N/m^2",
                 cell.size.x / 1000.0,
                 cell.size.y / 1000.0,
                 cell.size.z / 1000.0,

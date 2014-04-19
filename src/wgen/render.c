@@ -128,7 +128,7 @@ int WorldRender_Sunlight_Quick(World *w, Image *m)
 
 
 
-
+/*
 int WindsimRender_Gravity(Windsim *w, Image *m)
 {
     unsigned int square = (unsigned int) (m->size.y / w->size.z);
@@ -144,8 +144,8 @@ int WindsimRender_Gravity(Windsim *w, Image *m)
         unsigned char r = g;
         unsigned char b = g;
         
-        /*printf("z %d: height %.2f m, gravity %.2f m/s^2\n",
-            (int) index, cell->height, cell->gravity);*/
+        /printf("z %d: height %.2f m, gravity %.2f m/s^2\n",
+            (int) index, cell->height, cell->gravity);/
         
         for (size_t i = 0; i < m->size.x * square; i++)
         {
@@ -156,6 +156,7 @@ int WindsimRender_Gravity(Windsim *w, Image *m)
     
     return 1;
 }
+*/
 
 
 /*

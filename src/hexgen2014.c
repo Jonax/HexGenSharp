@@ -47,9 +47,31 @@ int example(void)
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
-    //if (!WindsimInit(&windsim, &world, Size3D(256, 256, 16))) { X(WindsimInit); }
+    if (!WindsimInit(&windsim, &world, Size3D(64, 64, 32))) { X(WindsimInit); }
     
-    Windsim1D(&windsim, &world, Size3D(0, 0, 32));
+    WorldDefinePlanet
+    (
+        &world,
+        6371000.0, // radius
+        9.81, // g
+        1.0, // distance from sun in AU
+        1.0 // relative solar luminosity
+    );
+    
+    WorldDefineSeasons
+    (
+        &world,
+        SEASONAL_TILT_EARTH,
+        NORTHERN_SOLSTICE_EARTH
+    );
+    
+    WorldDefineArea
+    (
+        &world,
+        GeoCoordinate("0N 0E"),
+        Vector3Df(12000.0, 12000.0, 10000.0)
+    );
+    
     WindsimRun(&windsim,  &image_windsim, &image_graph, 100);
     
     while (1)
