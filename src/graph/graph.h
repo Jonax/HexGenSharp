@@ -1,6 +1,6 @@
 /*
  
- src/image.h - image handling
+ src/graph/graph.h - graph plotting
  
  ------------------------------------------------------------------------------
  
@@ -28,30 +28,19 @@
  
 */
 
-#ifndef HG14_IMAGE_H
-#   define HG14_IMAGE_H
+#ifndef HG14_GRAPH_H
+#   define HG14_GRAPH_H
 
-#include "types.h"
+#include "types.h" // e.g. size2D, vector3Df
+#include "image.h"
 
-# define RGBA_WRITE1(p,c) \
-    *(p++) = c; *p++ = c; *p++ = c; *p++ = 255;
-# define RGBA_WRITE3(p,r,g,b) \
-    *(p++) = r; *p++ = g; *p++ = b; *p++ = 255;
-# define RGBA_WRITE4(p,r,g,b,a) \
-    *(p++) = r; *p++ = g; *p++ = b; *p++ = a;
-
-typedef struct Image Image;
-
-struct Image
-{
-    unsigned char *pixels;
-    size2D size;
-    size_t bytes;
-};
-
-int ImageInit(Image *i, size2D size);
-int ImageSaveTo(Image *i, const char *path);
-int ImageLoad(Image *i, const unsigned char *data, size_t size);
-int ImageFill(Image *i, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+int GraphAtmosphere1D
+(
+    const char *title,
+    Image *buffer,
+    size_t layers,
+    // TODO cells
+    vector3Df size // metres; size at surface and height as z.
+);
 
 #endif

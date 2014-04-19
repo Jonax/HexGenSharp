@@ -147,7 +147,7 @@ int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, d
 // === windsim.c ===
 int WindsimInit(Windsim *sim, World *w, size3D size);
 int WindsimSampleWorld(Windsim *sim);
-int WindsimRun(Windsim *sim, Image *img, int it);
+int WindsimRun(Windsim *sim, Image *img, Image *graph, int it);
 int Windsim1D(Windsim *sim, World *w, size3D size);
 
 // === world.c ===

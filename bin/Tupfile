@@ -12,6 +12,7 @@ include_rules
 ifeq (@(LINUX32_ENABLED),yes)
 
 : foreach $(ROOTDIR)/src/*.c |>                  $(LINUX32_CC) $(WARNINGS) -c %f -o %o |> hg14_l32_%B.o
+: foreach $(ROOTDIR)/src/graph/*.c |>            $(LINUX32_CC) $(WARNINGS) -c %f -o %o |> hg14_l32_graph_%B.o
 : foreach $(ROOTDIR)/src/rng/*.c |>              $(LINUX32_CC) $(WARNINGS) -c %f -o %o |> hg14_l32_rng_%B.o
 : foreach $(ROOTDIR)/src/noise/*.c |>            $(LINUX32_CC) $(WARNINGS) -c %f -o %o |> hg14_l32_noise_%B.o
 : foreach $(ROOTDIR)/src/wgen/*.c |>             $(LINUX32_CC) $(WARNINGS) -c %f -o %o |> hg14_l32_wgen_%B.o
@@ -26,6 +27,7 @@ endif
 ifeq (@(LINUX64_ENABLED),yes)
 
 : foreach $(ROOTDIR)/src/*.c |>                  $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_%B.o
+: foreach $(ROOTDIR)/src/graph/*.c |>            $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_graph_%B.o
 : foreach $(ROOTDIR)/src/rng/*.c |>              $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_rng_%B.o
 : foreach $(ROOTDIR)/src/noise/*.c |>            $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_noise_%B.o
 : foreach $(ROOTDIR)/src/wgen/*.c |>             $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_wgen_%B.o
@@ -40,6 +42,7 @@ endif
 ifeq (@(WIN32_ENABLED),yes)
 
 : foreach $(ROOTDIR)/src/*.c |>                  $(WIN32_CC) $(WARNINGS) -c %f -o %o |> hg14_w32_%B.o
+: foreach $(ROOTDIR)/src/graph/*.c |>            $(WIN32_CC) $(WARNINGS) -c %f -o %o |> hg14_w32_graph_%B.o
 : foreach $(ROOTDIR)/src/rng/*.c |>              $(WIN32_CC) $(WARNINGS) -c %f -o %o |> hg14_w32_rng_%B.o
 : foreach $(ROOTDIR)/src/noise/*.c |>            $(WIN32_CC) $(WARNINGS) -c %f -o %o |> hg14_w32_noise_%B.o
 : foreach $(ROOTDIR)/src/wgen/*.c |>             $(WIN32_CC) $(WARNINGS) -c %f -o %o |> hg14_w32_wgen_%B.o
@@ -54,6 +57,7 @@ endif
 ifeq (@(WIN64_ENABLED),yes)
 
 : foreach $(ROOTDIR)/src/*.c |>                  $(WIN64_CC) $(WARNINGS) -c %f -o %o |> hg14_w64_%B.o
+: foreach $(ROOTDIR)/src/graph/*.c |>            $(WIN64_CC) $(WARNINGS) -c %f -o %o |> hg14_w64_graph_%B.o
 : foreach $(ROOTDIR)/src/rng/*.c |>              $(WIN64_CC) $(WARNINGS) -c %f -o %o |> hg14_w64_rng_%B.o
 : foreach $(ROOTDIR)/src/noise/*.c |>            $(WIN64_CC) $(WARNINGS) -c %f -o %o |> hg14_w64_noise_%B.o
 : foreach $(ROOTDIR)/src/wgen/*.c |>             $(WIN64_CC) $(WARNINGS) -c %f -o %o |> hg14_w64_wgen_%B.o

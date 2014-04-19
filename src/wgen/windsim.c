@@ -94,7 +94,6 @@ void WindsimStepCell(Windsim *sim, size_t z)
     double downforce = cell->pressure * (1000.0 * 1000.0) + force;
     double upforce = cell->pressure * (1000.0 * 1000.0);
     
-    
     /*
     printf("z%02d: h %.2f m, g %.2f m/s^2, density %.2f KG/m^3, mass %.2f kg, force of g %.2f N\n",
         (int) z, height, gravity, cell->density, mass, force);
@@ -156,13 +155,14 @@ void WindsimResolveCell(Windsim *sim, size_t z)
 }
 
 
-
-int WindsimRun(Windsim *sim, Image *img, int it)
+#include "graph/graph.h"
+int WindsimRun(Windsim *sim, Image *img, Image *graph, int it)
 {
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim, Cell(1.225, 273.15, 0.0));
     
-    it = 200; it = 1;
+    it = 401;
+    //it = 1;
     printf("Wind simulation: %d iterations over %dx%dx%d\n",
         it, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     
@@ -189,13 +189,25 @@ int WindsimRun(Windsim *sim, Image *img, int it)
         )
         {
         char filename0[256];char filename1[256];char filename2[256];char filename3[256];
+        char filegraph[256];
         sprintf(filename0, ".windsim/gravity/gravity-%d.png", i);
         sprintf(filename1, ".windsim/pressure/windsim-pressure-%d.png", i);
         sprintf(filename2, ".windsim/force/windsim-force-%d.png", i);
         sprintf(filename3, ".windsim/density/windsim-density-%d.png", i);
+        sprintf(filegraph, ".windsim/graph/graph-%d.png", i);
         
         WindsimRender_Gravity(sim, img);
         ImageSaveTo(img, filename0);
+        
+        if ((i % 50) == 0)
+        {
+            char title[256];
+            sprintf(title, "iteration %d/%d", i, it - 1);
+        
+            GraphAtmosphere1D(title, graph, 16, Vector3Df(1000, 1000, 100 * 1000));
+            ImageSaveTo(graph, filegraph);
+        }
+        
         //WindsimRender_Pressure(sim, img);
         //ImageSaveTo(img, filename1);
         //WindsimRender_Force(sim, img);

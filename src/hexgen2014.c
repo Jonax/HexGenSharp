@@ -38,10 +38,11 @@ int example(void)
     Generator generator;
     World world;
     Windsim windsim;
-    Image image, image_windsim;
+    Image image, image_windsim, image_graph;
     
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
     if (!ImageInit(&image_windsim, Size2D(48, 768))) { X(ImageInit); }
+    if (!ImageInit(&image_graph, Size2D(1024 + 512, 768))) { X(ImageInit); }
     
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
@@ -49,7 +50,7 @@ int example(void)
     //if (!WindsimInit(&windsim, &world, Size3D(256, 256, 16))) { X(WindsimInit); }
     
     Windsim1D(&windsim, &world, Size3D(0, 0, 16));
-    WindsimRun(&windsim,  &image_windsim, 100);
+    WindsimRun(&windsim,  &image_windsim, &image_graph, 100);
     
     while (1)
     {
