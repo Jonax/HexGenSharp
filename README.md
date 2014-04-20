@@ -1,7 +1,7 @@
 hexgen2014 world generator
 ==========================
 
-This is a program for creating nice looking images of a world map. Maps are randomly generated using entirely procedural methods.
+This is a program for creating nice looking images of a world map and simulating weather. Maps are randomly generated using entirely procedural methods.
 
 **TODO SCREENSHOT**
 
@@ -26,13 +26,15 @@ New Features
 
 Improving over all previous releases:
 
-**Months and Seasons!** Seasonal variation over the same map is now supported by varying axial tilt, wind direction, and rainfall quantity. This is then factored into the rainfall simulation.
+**Advanced weather simulation!** Atmosphere, wind and weather are simulated in incredible detail. Weather changes over time.
+
+**Seasons!** Seasonal variation over the same map is now supported by varying axial tilt. This is then automatically factored into the new weather simulation.
 
 **Improved terrain generation:** Terrain is generated using a new simplex noise method, replacing the old midpoint displacement algorithm. This gives greater flexibility in the shape of map and generates higher quality terrains, avoiding artifacts such as diamond shaped mountains or square shaped peninsulas.
 
 **Custom terrain shape masks:** Generating maps in specific shapes is now possible using preset shapes or by loading a custom image as a mask.
 
-**Greater control:** Do you want to simulate 12 months of sunlight patterns over a small island in the North? Or would you rather simulate a pattern of dry and monsoon seasons over a world-spanning continent baked in the glow of a giant sun? What about a garden world where a low axial tilt means mild seasons? Your imagination can go wild.
+**More customisable than ever before:** Do you want to simulate 12 months of sunlight patterns over a small island in the North? Or would you rather simulate a pattern of dry and monsoon seasons over a world-spanning continent baked in the glow of a giant sun? What about a garden world where a low axial tilt means mild seasons? Your imagination can go wild.
 
 **LaTeX/PDF output:** Automatically generate a fancy PDF document of your world and its features using `pdflatex`. Alternatively use the generated LaTeX files as the basis for your own worldbuilding document.
 
