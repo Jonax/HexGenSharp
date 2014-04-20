@@ -365,10 +365,13 @@ int GraphAtmosphere1D
             char str0[16]; char str1[512];
             sprintf(str0, "h=%.1f", cell.altitude / 1000.0);
             sprintf(str1,
-                "p=%.2f  "
-                "P=%.0f",
+                "p=%.2f "
+                "P=%.0f "
+                "v=%.2f "
+                ,
                 cell.density,
-                cell.pressure
+                cell.pressure,
+                cell.velocity
             );
             
             WriteSlant(buffer, &glyphs, &pen, Vector2Df(x0 + 16.0, y0 - 7.5), Vector2Df(-4.0, 10), str0);

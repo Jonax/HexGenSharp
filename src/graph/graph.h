@@ -42,6 +42,7 @@ struct GraphAtmosphere1DCell
     double density;
     double pressure;
     double altitude;
+    double velocity;
 };
 
 int GraphAtmosphere1D

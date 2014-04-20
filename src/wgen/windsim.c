@@ -26,8 +26,8 @@
  
  ------------------------------------------------------------------------------
  
- Wind simulation as a celluar automation. For more information, please see
- the series of posts on the Hero Extant development blog:
+ Wind simulation as a cellular automation. For more information, please see
+ the series of posts on the Hero Extant Development Blog:
  
  http://www.heroextant.net/blog/post/news/20140416-lets-simulate-a-planet-atmosphere-air-pressure-air-density.html
  
@@ -47,9 +47,12 @@ int WindsimInit(Windsim *sim, World *w, size3D size)
     sim->elements = size.x * size.y * size.z;
     sim->height = WINDSIM_HEIGHT;
     
+    /* a 3D grid of cells covering the map surface */
     sim->cell = malloc(sizeof(Windcell) * sim->elements);
     if (!sim->cell) { X(alloc_sim_cells); }
     
+    /* a 1D grid of cells extending along the z axis away from the surface
+     * of the planet, for graphing simulation state by altitude. */
     sim->graphAtmosphere1DCell = malloc(sizeof(GraphAtmosphere1DCell) * sim->size.z);
     if (!sim->graphAtmosphere1DCell) { X(alloc_graph_cells); }
     
@@ -82,10 +85,22 @@ void WindcellInit
     c->volume = (c->dimension.x * c->dimension.y * c->dimension.z);
     c->volume_reciprocal = 1.0 / c->volume;
     
+    c->velocity.x = 0.0;
+    c->velocity.y = 0.0;
+    c->velocity.z = 0.0;
+    
     return;
     
     err_bad_argument:
         return;
+}
+
+
+double DesiredMassByDensity(double density, vector3Df dimension)
+{
+    // mass = density * volume
+    double volume = dimension.x * dimension.y * dimension.z;
+    return (density * volume);
 }
 
 
@@ -157,12 +172,17 @@ static double TriangleExtendedOpposite
 
 void WindsimCellsInit(Windsim *sim)
 {
+    double altitude = 0;
+    double n = (double) sim->size.z + 1;
+    
     for (size_t z = 0; z < sim->size.z; z++)
     {
-        double zf       = 0.5 + (double) z;
-        double ceiling  = 0.0 + (double) sim->size.z;
-        double altitude = sim->height * (zf / ceiling);
-        double depth    = sim->height / ceiling;
+        // smaller depths nearer the surface for accuracy
+        // using depths of nx for 
+        // and x = 2h/((n)(n-1))
+        double x = 2.0 * sim->height / (n * (n - 1));
+        double depth = x * (1.0 + (double) z);
+        altitude += depth * 0.5; // midpoint
         
         printf("Windsim cell layer %d/%d, altitude %.2f\n",
             (int) z, (int) sim->size.z -1, altitude);
@@ -200,6 +220,8 @@ void WindsimCellsInit(Windsim *sim)
                 Vector3Df(width, height, depth) // m*m*m
             );
         }
+        
+        altitude += depth * 0.5; // beyond midpoint
     }
 }
 
@@ -223,9 +245,23 @@ void WindsimStepCell(Windsim *sim, size_t z, size_t i)
     cell->force_up      = area_force_z;
     cell->force_down    = area_force_z + cell->weight;
     
-    if (i == 0)
+    //if (i == 0)
+    if (0)
     {
-        //printf("cell layer %d dimension %d");
+        if (z == 0) { printf("\n"); }
+        
+        printf("cell layer %d: dimension %.0fx%.0fx%.0f mass %.0f weight %.0f pressure %.0f\n"
+               "               force: up %.0f MN, down %.0f MN\n",
+            (int) z,
+            cell->dimension.x,
+            cell->dimension.y,
+            cell->dimension.z,
+            cell->mass,
+            cell->weight,
+            pressure,
+            cell->force_up  / 1000000.0,
+            cell->force_down / 1000000.0
+            );
     }
     /*
     printf("z%02d: h %.2f m, g %.2f m/s^2, density %.2f KG/m^3, mass %.2f kg, force of g %.2f N\n",
@@ -243,6 +279,7 @@ void WindsimStepCell(Windsim *sim, size_t z, size_t i)
         graphCell->density  = WindcellDensity(cell);
         graphCell->pressure = WindcellPressure(cell);
         graphCell->altitude = cell->altitude;
+        graphCell->velocity = cell->velocity.z;
     }
     
     // cell->torque = ||r|| ||F||;
@@ -269,36 +306,61 @@ void WindsimResolveCell(Windsim *sim, size_t z, size_t i)
     Windcell *below = WindcellAtZI(sim, z, i);
     Windcell *from, *to;
     
-    double diff = (above->force_down - below->force_up);
+    double force = (above->force_down - below->force_up);
     
-    if (diff > 0.0) { from = above; to = below; }
-    else { from = below; to = above; }
-    // > 0.0 means above pushes down
+    if (force > 0.0) { from = above; to = below; }
+    else             { from = below; to = above; }
     
-    // diff is a vector force in N
+    // Work = force * distance
+    double distance = fabs(from->altitude - to->altitude);
+    double transfer = fabs(force) / distance;
+    UNUSED(transfer);
     
-    // f = ma
-    // so a = f/m
-    // now assume time = 1 second and completely make up some physics that
-    // probably isn't correct, but convert acceleration into distance
-    // and use that distance as a proportion of height to estimate what moves
-    double mass = from->mass;
-    if (mass < 1.0) { return; }
+    // f=ma, a = f/m
+    double a2 = force / from->mass;
+    if (0)
+    if (i == 0) {
+            printf("a2: %f m/s^2 (size %.0fm; in 1 second %.4f)\n",
+        a2,
+        from->dimension.z,
+        a2 / from->dimension.z
+        );
+    }
     
-    double h = from->dimension.z;
-    double d = diff / mass;
-    double proportion = d / h;
-    double transfer = fabs(proportion * mass);
-    transfer *= 10; // speed up
+    from->velocity.z += a2;
+    if (from->velocity.z > 500.0) { from->velocity.z = 500.0; }
     
+    // transfer = diff / height
+    //transfer = fabs(diff * WindcellDensity(from) / h);
+    
+    //transfer *= 10; // speed up
+    
+    //if (i == 0)
+    if (0)
+    {
+        printf("layer %d->%d: from velocity now %.3f, to velocity now %.3f\n",
+            (int) z + 1,
+            (int) z,
+            from->velocity.z,
+            to->velocity.z);
+    }
+    
+    /*
     if (i == 0)
     {
+          printf("transfer layer %d->%d: diff %.0f MN transfer %.0f tons of %.0f tons\n",
+              (int) z+1,
+              (int) z,
+              force / 1000000.0,
+              transfer / 1000.0,
+              from->mass / 1000.0);
     //    printf("%d->%d: force %.2f N means a transfer of proportion %.6f which = mass %.0f ton of %.0f ton\n",
       //  (int) z + 1, (int) z, diff, proportion, transfer / 1000.0, mass / 1000.0);
     }
-    if (transfer > mass) { transfer = mass; }
+    if (transfer > from->mass) { transfer = from->mass; }
     ChangeMass(from, -transfer);
     ChangeMass(to, transfer);
+    */
     
     /*
     
@@ -318,14 +380,17 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
     //if (!WindsimSampleWorld(sim)) { X(WindsimSampleWorld); }
     WindsimCellsInit(sim);
     
-    iterations = 2501;
+    //iterations = 2501;
+    //iterations = 3;
+    //iterations = 50;
+    iterations = 10001;
     
     printf("Wind simulation: %d iterations over %dx%dx%d cells\n",
         iterations, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
     
     for (int iteration = 0; iteration < iterations; iteration++)
     {
-        if (iteration % 10 == 0) { printf("Windsim: %d/%d\n", iteration, iterations - 1); }
+        if (iteration % 100 == 0) { printf("Windsim: %d/%d\n", iteration, iterations - 1); }
         
         for (size_t i = 0; i < sim->size.x * sim->size.y; i++)
         {
@@ -338,10 +403,47 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
             {
                 WindsimResolveCell(sim, z, i);
             }
+            
+            for (size_t z = 0; z < sim->size.z; z++)
+            {
+                Windcell *cell = WindcellAtZI(sim, z, i);
+                double transfer = cell->mass * cell->velocity.z / cell->dimension.z;
+                if ((transfer > 0.0) && (z == 0)) { continue; }
+                if ((transfer < 0.0) && (z == sim->size.z - 1)) { continue; }
+                
+                if (transfer > cell->mass) { transfer = cell->mass; }
+                if (transfer < -cell->mass) { transfer = -cell->mass; }
+                
+                Windcell *to;
+                if (transfer > 0.0) { to = WindcellAtZI(sim, z-1, i); }
+                else                { to = WindcellAtZI(sim, z+1, i); }
+                
+                //if (i == 0)
+                if (0)
+                    { printf("%d: transfer %.2f tons of %.2f tons\n",
+                        (int) z, transfer / 1000.0, cell->mass / 1000.0); }
+                
+                // when transferring mass, it is travelling at a velocity
+                // so we want to transfer momentum
+                // p = mv
+                double momentum1 = (fabs(transfer) * cell->velocity.z);
+                double momentum2 = (to->mass * to->velocity.z);
+                to->velocity.z = (momentum1 + momentum2) / to->mass;
+                
+                // and reduce the from velocity accordingly
+                momentum2 = (cell->mass * cell->velocity.z);
+                cell->velocity.z -= (momentum1 + momentum2) / cell->mass;
+                
+                if (to->velocity.z > 100.0) { to->velocity.z = 100.0; }
+                
+                transfer = ChangeMass(cell, -fabs(transfer));
+                ChangeMass(to, fabs(transfer));
+            }
         }
         
         if (iteration % 250 == 0)
         //if (1)
+        //if ((iteration <= 50) || (iteration % 50 == 0))
         {
             char title[256];
             char filegraph[256];

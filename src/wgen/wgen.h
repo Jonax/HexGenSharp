@@ -111,6 +111,7 @@ struct Windcell
     double moisture;
     double altitude;
     vector3Df dimension; // of any cell
+    vector3Df velocity;
     
     // Derived
     double volume;
