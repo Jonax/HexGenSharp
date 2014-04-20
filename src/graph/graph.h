@@ -41,6 +41,7 @@ struct GraphAtmosphere1DCell
     vector3Df size;
     double density;
     double pressure;
+    double altitude;
 };
 
 int GraphAtmosphere1D
@@ -48,7 +49,9 @@ int GraphAtmosphere1D
     const char *title,
     Image *buffer,
     size_t layers,
-    GraphAtmosphere1DCell *cells
+    GraphAtmosphere1DCell *cells,
+    double planet_radius,
+    double planet_gravity
 );
 
 #endif

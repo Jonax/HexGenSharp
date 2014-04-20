@@ -242,6 +242,7 @@ void WindsimStepCell(Windsim *sim, size_t z, size_t i)
         graphCell->size     = cell->dimension;
         graphCell->density  = WindcellDensity(cell);
         graphCell->pressure = WindcellPressure(cell);
+        graphCell->altitude = cell->altitude;
     }
     
     // cell->torque = ||r|| ||F||;
@@ -347,7 +348,8 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
             sprintf(title, "iteration %d/%d", iteration, iterations - 1);
             sprintf(filegraph, ".windsim/graph/graph-%d.png", iteration);
             
-            GraphAtmosphere1D(title, graph, sim->size.z, sim->graphAtmosphere1DCell);
+            GraphAtmosphere1D(title, graph, sim->size.z, sim->graphAtmosphere1DCell,
+                sim->world->radius, sim->world->gravity);
             ImageSaveTo(graph, filegraph);
         }
     }

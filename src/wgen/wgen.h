@@ -190,13 +190,16 @@ int WorldLandmassAtBottomEdge(World *w);
 int WorldLandmassAtLeftEdge(World *w);
 int WorldLandmassAtRightEdge(World *w);
 double WorldLandMassProportion(World *w);
-int WorldCalculateDirectSolarRadiation
+
+int WorldCalculateDirectSolarRadiation(World *w, double orbit);
+
+int PlanetCalculateDirectSolarRadiation
 (
     Doubles2D *buffer,
     double orbit,               // yearly orbit normalised 0.0 to 1.0
     double northern_solstace,   // point in orbit where this occurs (Earth is at 0.222)
     double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-    double planet_radius,       // where 1.0 is the mean radius of the Earth
+    double planet_radius,       // in metres
     double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth
     double solar_luminosity,    // 1.0 for our Sun ~= 3.846 × 10^26 Watts
     geocoordinate map_center,   // see wgen/geocoordinates.h

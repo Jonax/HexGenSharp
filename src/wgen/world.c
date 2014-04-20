@@ -71,11 +71,11 @@ int WorldDefinePlanet
     double solar_luminosity // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
 )
 {
-    if (!w)                      { X2(bad_arg, "NULL world pointer"); }
-    if (radius <= 0.0)           { X2(bad_arg, "radius must be > 0"); }
+    if (!w)                      { X2(bad_arg, "NULL world pointer");  }
+    if (radius <= 0.0)           { X2(bad_arg, "radius must be > 0");  }
     if (gravity <= 0.0)          { X2(bad_arg, "gravity must be > 0"); }
     if (distance_sun <= 0.0)     { X2(bad_arg, "distance from sun must be > 0"); }
-    if (solar_luminosity <= 0.0) { X2(bad_arg, "solar_luminosity must be > 0"); }
+    if (solar_luminosity <= 0.0) { X2(bad_arg, "solar_luminosity must be > 0");  }
     
     w->radius            = radius;
     w->gravity           = gravity;
@@ -97,11 +97,11 @@ int WorldDefineSeasons
     double northern_solstice // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
 )
 {
-    if (!w)                        { X2(bad_arg, "NULL world pointer"); }
+    if (!w)                        { X2(bad_arg, "NULL world pointer");   }
     if (seasonal_tilt < -180.0)    { X2(bad_arg, "tilt must be >= -180"); }
-    if (seasonal_tilt > +180.0)    { X2(bad_arg, "tilt must be <= 180"); }
+    if (seasonal_tilt > +180.0)    { X2(bad_arg, "tilt must be <= 180");  }
     if (northern_solstice <= -1.0) { X2(bad_arg, "northern solstice must be > -1.0"); }
-    if (northern_solstice >= +1.0) { X2(bad_arg, "northern solstice must be < 1.0"); }
+    if (northern_solstice >= +1.0) { X2(bad_arg, "northern solstice must be < 1.0");  }
     
     w->axial_tilt        = seasonal_tilt;
     w->northern_solstice = northern_solstice;
@@ -121,11 +121,11 @@ int WorldDefineArea
     vector3Df dimension     // surface width from top/bottom, left/right, floor/ceil
 )
 {
-    if (!w)                          { X2(bad_arg, "NULL world pointer"); }
-    if (!GeoCoordinateValid(center)) { X2(bad_arg, "geocoordinate invalid"); }
-    if (dimension.x <= 0.0)          { X2(bad_arg, "dimension.x must be > 0"); }
-    if (dimension.y <= 0.0)          { X2(bad_arg, "dimension.y must be > 0"); }
-    if (dimension.z <= 0.0)          { X2(bad_arg, "dimension.z must be > 0"); }
+    if (!w)                          { X2(bad_arg,   "NULL world pointer");      }
+    if (!GeoCoordinateValid(center)) { X2(bad_arg,   "geocoordinate invalid");   }
+    if (dimension.x <= 0.0)          { X2(bad_arg,   "dimension.x must be > 0"); }
+    if (dimension.y <= 0.0)          { X2(bad_arg,   "dimension.y must be > 0"); }
+    if (dimension.z <= 0.0)          { X2(bad_arg,   "dimension.z must be > 0"); }
     if (!w->defined_planet)          { X2(bad_state, "WorldDefinePlanet first"); }
     
     double circumference = 2.0 * PI * w->radius;
@@ -329,6 +329,32 @@ double WorldLandMassProportion(World *w)
     return (((double) count) / ((double) w->elevation.elements));
 }
 
+int WorldCalculateDirectSolarRadiation(World *world, double orbit)
+{
+    if (orbit < 0.0)             { X2(bad_arg,   "orbit must be >= 0.0");     }
+    if (orbit > 1.0)             { X2(bad_arg,   "orbit must be >= 1.0");     }
+    if (!world->defined_planet)  { X2(bad_state, "WorldDefinePlanet first");  }
+    if (!world->defined_seasons) { X2(bad_state, "WorldDefineSeasons first"); }
+    if (!world->defined_area)    { X2(bad_state, "WorldDefineArea first");    }
+    
+    return PlanetCalculateDirectSolarRadiation
+    (
+        &world->sunlight,
+        orbit,
+        world->northern_solstice,
+        world->axial_tilt,
+        world->radius,
+        world->distance_from_sun,
+        world->solar_luminosity,
+        world->center,
+        world->dimension.y
+    );
+    
+    err_bad_state:
+    err_bad_arg:
+        return 0;
+}
+
 
 /* Model the direct solar radiation over the map at any given time (direct i.e.
    sunshine). This EXCLUDES diffuse radiation (e.g. atmospheric scattering)
@@ -340,13 +366,13 @@ double WorldLandMassProportion(World *w)
        *Power From The Sun*, (Online), 2001.
        http://www.powerfromthesun.net/Book/chapter02/chapter02.html
 */
-int WorldCalculateDirectSolarRadiation
+int PlanetCalculateDirectSolarRadiation
 (
     Doubles2D *buffer,
     double orbit,               // yearly orbit normalised 0.0 to 1.0
     double northern_solstace,   // point in orbit where this occurs (Earth is at 0.222)
     double axial_tilt,          // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-    double planet_radius,       // where 1.0 is the mean radius of the Earth
+    double planet_radius,       // in metres
     double distance_from_sun,   // in astronomical units e.g. 1.0 AU for Earth
     double solar_luminosity,    // 1.0 for our Sun ~= 3.846 × 10^26 Watts
     geocoordinate map_center,   // see wgen/geocoordinates.h
@@ -362,12 +388,8 @@ int WorldCalculateDirectSolarRadiation
     // Denormalise to SI units (metres, watts, etc).
     double si_solar_luminosity  = solar_luminosity * 3.846 * pow(10.0, 26.0);
     double si_distance_from_sun = distance_from_sun * 149600000000.0;
-    double si_planet_radius     = planet_radius * 6371000.0;
     //double si_planet_surface_area = (4.0 * PI * si_planet_radius * si_planet_radius);
-    double si_surface_distance_from_sun = si_distance_from_sun - si_planet_radius;
-    
-    if (PI * si_planet_radius < mapsize * 1000.0)
-    { W("mapsize is too large for a planet of this radius!"); }
+    double si_surface_distance_from_sun = si_distance_from_sun - planet_radius;
     
     // Radiation on an imaginary surface at the planet's edge, perpendicular
     // to the direction of rays from the sun, using Inverse Square Law.

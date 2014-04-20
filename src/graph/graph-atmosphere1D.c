@@ -105,6 +105,20 @@ vector2Df Write(Image *buffer, Image *glyphs, Pen *pen, vector2Df pos, const cha
 }
 
 
+vector2Df WriteSlant(Image *buffer, Image *glyphs, Pen *pen, vector2Df pos, vector2Df slant, const char *s)
+{
+    while (*s != '\0')
+    {
+        pos = WriteChar(buffer, glyphs, pen, pos, *s);
+        pos.x += slant.x;
+        pos.y += slant.y;
+        s++;
+    }
+    
+    return pos;
+}
+
+
 void Plot(Image *buffer, Pen *pen, vector2Df xy)
 {
     for (double y = -pen->radius; y < pen->radius + EPSILON; y+= 1.0)
@@ -226,13 +240,15 @@ int GraphAtmosphere1D
     const char *title,
     Image *buffer,
     size_t layers,
-    GraphAtmosphere1DCell *cells
+    GraphAtmosphere1DCell *cells,
+    double planet_radius,
+    double planet_gravity
 )
 {
     Pen pen; PenInit(&pen, PEN_BLACK, 1.0);
     Pen thinpen; PenInit(&thinpen, PEN_BLACK, 0.5);
     
-    double height = (double) (buffer->size.y) * 1.25;
+    double height = (double) (buffer->size.y) * 1.15;
     double earth_height = 0.2;
     
     Image glyphs;
@@ -305,6 +321,7 @@ int GraphAtmosphere1D
         double y0 = (double) (buffer->size.y) - r * sin(radians(60));
         double x1 = r * sin(radians(60));
         double y1 = (double) (buffer->size.y) - r * sin(radians(30));
+        double xmax = height * sin(radians(60));
         
         GraphDrawLine
         (
@@ -344,23 +361,64 @@ int GraphAtmosphere1D
             );
         
             // And write on it
-            char str[512];
-            sprintf(str,
-                "%.2fx%.2fx%.2f km, "
-                "density %.2f kg/m^3, "
-                "pressure %.0f N/m^2",
-                cell.size.x / 1000.0,
-                cell.size.y / 1000.0,
-                cell.size.z / 1000.0,
+            char str0[16]; char str1[512];
+            sprintf(str0, "%.1f km", cell.altitude / 1000.0);
+            sprintf(str1,
+                "p=%.2f  "
+                "P=%.0f",
                 cell.density,
                 cell.pressure
             );
             
-            Write(buffer, &glyphs, &pen, Vector2Df(x1 + 32.0, y1 - 16.0), str);
+            WriteSlant(buffer, &glyphs, &pen, Vector2Df(x0 + 16.0, y0 - 7.5), Vector2Df(-4.0, 10), str0);
+            Write(buffer, &glyphs, &pen, Vector2Df(xmax + 16.0, y1 - 16.0), str1);
         }
     }
     
+    // print title, subtitle & key
+    {
+    char str0[512];
+    sprintf(str0, "planet gravity: %.2f m/s^2", planet_gravity);
     Write(buffer, &glyphs, &pen, Vector2Df(16.0, 16.0), title);
+    Write(buffer, &glyphs, &pen, Vector2Df(16.0, 48.0), str0);
+    Write(buffer, &glyphs, &pen,
+        Vector2Df(16.0 + (0.2 * (double) buffer->size.y) * 1.25, -64.0 + (double) buffer->size.y),
+        "p=density (kg/m^3), P=pressure (N/m^2)");
+    }
+    
+    // print planet radius
+    {
+        char str0[64];
+        sprintf(str0, "%.0f km", planet_radius / 1000.0);
+        
+        WriteSlant(buffer, &glyphs, &pen,
+            Vector2Df(56.0, -24.0 + (double) buffer->size.y),
+            Vector2Df(-4.0, -6.5),
+            str0);
+            
+    }
+    
+    // print cell sizes
+    {
+    char str0[512];
+    GraphAtmosphere1DCell bottom = cells[0];
+    GraphAtmosphere1DCell top = cells[layers-1];
+    
+    sprintf(str0,
+        "cell size: bottom %.3fx%.3fx%.3f km, top %.3fx%.3fx%.3f km",
+        bottom.size.x / 1000.0,
+        bottom.size.y / 1000.0,
+        bottom.size.z / 1000.0,
+        top.size.x / 1000.0,
+        top.size.y / 1000.0,
+        top.size.z / 1000.0
+    );
+    
+    Write(buffer, &glyphs, &pen,
+        Vector2Df(16.0 + (0.2 * (double) buffer->size.y) * 1.25,
+                  -32.0 + (double) buffer->size.y),
+        str0);
+    }
     
     return 1;
     
