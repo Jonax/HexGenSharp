@@ -349,7 +349,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
             sprintf(filegraph, ".windsim/graph/graph-%d.png", iteration);
             
             GraphAtmosphere1D(title, graph, sim->size.z, sim->graphAtmosphere1DCell,
-                sim->world->radius, sim->world->gravity);
+                sim->world->radius, sim->world->gravity, sim->height);
             ImageSaveTo(graph, filegraph);
         }
     }

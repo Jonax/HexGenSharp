@@ -242,7 +242,8 @@ int GraphAtmosphere1D
     size_t layers,
     GraphAtmosphere1DCell *cells,
     double planet_radius,
-    double planet_gravity
+    double planet_gravity,
+    double simulation_height
 )
 {
     Pen pen; PenInit(&pen, PEN_BLACK, 1.0);
@@ -362,7 +363,7 @@ int GraphAtmosphere1D
         
             // And write on it
             char str0[16]; char str1[512];
-            sprintf(str0, "%.1f km", cell.altitude / 1000.0);
+            sprintf(str0, "h=%.1f", cell.altitude / 1000.0);
             sprintf(str1,
                 "p=%.2f  "
                 "P=%.0f",
@@ -371,7 +372,7 @@ int GraphAtmosphere1D
             );
             
             WriteSlant(buffer, &glyphs, &pen, Vector2Df(x0 + 16.0, y0 - 7.5), Vector2Df(-4.0, 10), str0);
-            Write(buffer, &glyphs, &pen, Vector2Df(xmax + 16.0, y1 - 16.0), str1);
+            Write(buffer, &glyphs, &pen, Vector2Df(xmax + 16.0, y1 - 15.0), str1);
         }
     }
     
@@ -383,19 +384,24 @@ int GraphAtmosphere1D
     Write(buffer, &glyphs, &pen, Vector2Df(16.0, 48.0), str0);
     Write(buffer, &glyphs, &pen,
         Vector2Df(16.0 + (0.2 * (double) buffer->size.y) * 1.25, -64.0 + (double) buffer->size.y),
-        "p=density (kg/m^3), P=pressure (N/m^2)");
+        "h=altitude (km), p=density (kg/m^3), P=pressure (N/m^2)");
     }
     
-    // print planet radius
+    // print planet radius and simulation total height
     {
-        char str0[64];
+        char str0[64]; char str1[64];
         sprintf(str0, "%.0f km", planet_radius / 1000.0);
+        sprintf(str1, "%.0f km", simulation_height / 1000.0);
         
         WriteSlant(buffer, &glyphs, &pen,
             Vector2Df(56.0, -24.0 + (double) buffer->size.y),
             Vector2Df(-4.0, -6.5),
             str0);
-            
+        
+        WriteSlant(buffer, &glyphs, &pen,
+            Vector2Df(200.0, -395.0 + (double) buffer->size.y),
+            Vector2Df(-4.0, -18),
+            str1);
     }
     
     // print cell sizes

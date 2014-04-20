@@ -51,7 +51,8 @@ int GraphAtmosphere1D
     size_t layers,
     GraphAtmosphere1DCell *cells,
     double planet_radius,
-    double planet_gravity
+    double planet_gravity,
+    double simulation_height
 );
 
 #endif
