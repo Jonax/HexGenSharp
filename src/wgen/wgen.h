@@ -117,6 +117,7 @@ struct Windcell
     double volume;
     double volume_reciprocal;
     double weight;
+    vector3Df dimension_reciprocal;
     
     // Forces
     double force_up;

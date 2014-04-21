@@ -34,6 +34,7 @@
 */
 
 #include "wgen/wgen.h"
+#include "graph/graph.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -88,6 +89,10 @@ void WindcellInit
     c->velocity.x = 0.0;
     c->velocity.y = 0.0;
     c->velocity.z = 0.0;
+    
+    c->dimension_reciprocal.x = 1.0 / c->dimension.x;
+    c->dimension_reciprocal.y = 1.0 / c->dimension.y;
+    c->dimension_reciprocal.z = 1.0 / c->dimension.z;
     
     return;
     
@@ -291,6 +296,38 @@ void WindsimStepForce(Windsim *sim, size_t z, size_t i)
 }
 
 
+void WindsimStepVelocity(Windsim *sim, size_t z, size_t i)
+{
+    if (z == 0)
+    {
+        // assumption: force of air rushing downwards is always met by the
+        // surface of the earth, so we start each step at the floor with the
+        // cell velocity at zero before acceleration is considered normally.
+        Windcell *floorcell = WindcellAtZI(sim, z, i);
+        if (floorcell->velocity.z > 0.0) { floorcell->velocity.z = 0.0; }
+        
+        // steps are evaluated from in order from z to z-1.
+        // shere z=0, there is no z-1.
+        return;
+    }
+    
+    Windcell *above = WindcellAtZI(sim, z, i);
+    Windcell *below = WindcellAtZI(sim, z - 1, i);
+    Windcell *from, *to;
+    
+    double force = (above->force_down - below->force_up);
+    
+    if (force > 0.0) { from = above; to = below; }
+    else             { from = below; to = above; }
+    
+    // Newton's Laws of Motion
+    // change in force = change in velocity = acceleration
+    // force = mass * acceleration: F=ma, a = F/m
+    from->velocity.z += force / from->mass;
+    to->velocity.z   += force / to->mass;
+}
+
+
 double ChangeMass(Windcell *cell, double ammount)
 {
     cell->mass += ammount;
@@ -300,36 +337,44 @@ double ChangeMass(Windcell *cell, double ammount)
 }
 
 
-void WindsimStepVelocity(Windsim *sim, size_t z, size_t i)
+void WindsimStepMass(Windsim *sim, size_t z, size_t i)
 {
-    Windcell *above = WindcellAtZI(sim, z, i);
-    Windcell *below = WindcellAtZI(sim, z - 1, i);
-    Windcell *from, *to;
+    // Transfer of mass and momentum due to velocity
+    Windcell *from  = WindcellAtZI(sim, z, i);
+    double transfer = from->mass * from->velocity.z * from->dimension_reciprocal.z;
     
-    double force = (above->force_down - below->force_up);
+    if ((transfer > 0.0) && (z == 0)) { return; }
+    if ((transfer < 0.0) && (z == sim->size.z - 1)) { return; }
     
-    if (force > 0.0) { from = above; to = below; }
-    else             { from = below; to = above; }
-    UNUSED(to);
+    //assert(transfer >= -from->mass);
+    //assert(transfer <= from->mass);
     
-    // force = mass * acceleration: F=ma, a = F/m
-    double acceleration = force / from->mass;
-    double acceleration2 = force / to->mass;
+    Windcell *to;
+    if (transfer > 0.0) { to = WindcellAtZI(sim, z-1, i); }
+    else                { to = WindcellAtZI(sim, z+1, i); }
     
-//    if (0)
-    if (i == 0)
-    {
-        printf("z: %d, a: %.4f m/s^2, velocity %.5f -> %.3f m/s\n",
-            (int) z, acceleration,
-            from->velocity.z, from->velocity.z + acceleration);
-    }
+    //if (i == 0)
+    if (0)
+        { printf("%d: transfer %.2f tons of %.2f tons\n",
+            (int) z, transfer / 1000.0, from->mass / 1000.0); }
     
-    from->velocity.z += acceleration;
-    to->velocity.z += acceleration2;
+    // when transferring mass, it is travelling at a velocity
+    // so we want to transfer momentum to a cell
+    // p = mv
+    double momentum1 = (fabs(transfer) * from->velocity.z);
+    double momentum2 = (to->mass * to->velocity.z);
+    to->velocity.z = (momentum1 + momentum2) / to->mass;
+    
+    // and an equal force in the opposite direction accordingly
+    momentum2 = (from->mass * from->velocity.z);
+    from->velocity.z -= (momentum1 + momentum2) / from->mass;
+    //cell->velocity.z = 0.0;
+    
+    transfer = ChangeMass(from, -fabs(transfer));
+    ChangeMass(to, fabs(transfer));
 }
 
 
-#include "graph/graph.h"
 int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
 {
     UNUSED(img);
@@ -339,7 +384,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
     //iterations = 2501;
     //iterations = 3;
     //iterations = 50;
-    iterations = 20001;
+    iterations = 10001;
     
     printf("Wind simulation: %d iterations over %dx%dx%d cells\n",
         iterations, (int) sim->size.x, (int) sim->size.y, (int) sim->size.z);
@@ -352,50 +397,20 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
         {
             for (size_t z = 0; z < sim->size.z; z++)
             {
-                // Forces due to pressure and gravity
+                // Calculate Forces due to pressure and gravity
                 WindsimStepForce(sim, z, i);
             }
             
-            for (size_t z = 1; z < sim->size.z; z++)
+            for (size_t z = 0; z < sim->size.z; z++)
             {
-                // Change in velocity due to change in force
+                // Calculate change in velocity due to forces
                 WindsimStepVelocity(sim, z, i);
             }
             
             for (size_t z = 0; z < sim->size.z; z++)
             {
                 // Transfer of mass and momentum due to velocity
-                Windcell *cell = WindcellAtZI(sim, z, i);
-                double transfer = cell->mass * cell->velocity.z / cell->dimension.z;
-                if ((transfer > 0.0) && (z == 0)) { continue; }
-                if ((transfer < 0.0) && (z == sim->size.z - 1)) { continue; }
-                
-                if (transfer > cell->mass) { transfer = cell->mass; }
-                if (transfer < -cell->mass) { transfer = -cell->mass; }
-                
-                Windcell *to;
-                if (transfer > 0.0) { to = WindcellAtZI(sim, z-1, i); }
-                else                { to = WindcellAtZI(sim, z+1, i); }
-                
-                //if (i == 0)
-                if (0)
-                    { printf("%d: transfer %.2f tons of %.2f tons\n",
-                        (int) z, transfer / 1000.0, cell->mass / 1000.0); }
-                
-                // when transferring mass, it is travelling at a velocity
-                // so we want to transfer momentum to a cell
-                // p = mv
-                double momentum1 = (fabs(transfer) * cell->velocity.z);
-                double momentum2 = (to->mass * to->velocity.z);
-                to->velocity.z = (momentum1 + momentum2) / to->mass;
-                
-                // and an equal force in the opposite direction accordingly
-                momentum2 = (cell->mass * cell->velocity.z);
-                cell->velocity.z -= (momentum1 + momentum2) / cell->mass;
-                //cell->velocity.z = 0.0;
-                
-                transfer = ChangeMass(cell, -fabs(transfer));
-                ChangeMass(to, fabs(transfer));
+                WindsimStepMass(sim, z, i);
             }
         }
         
