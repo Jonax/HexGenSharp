@@ -31,6 +31,11 @@ ifeq (@(CC_MODE),werror)
     LFLAGS_COMMON += -O0
 endif
 
+ifeq (@(CC_MODE),werrorO2)
+    CFLAGS_COMMON += -O2 -Werror
+    LFLAGS_COMMON += -O2
+endif
+
 ifeq (@(CC_MODE),debug)
     CFLAGS_COMMON += -O0 -DDEBUG_BUILD
     LFLAGS_COMMON += -O0

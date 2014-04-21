@@ -41,6 +41,7 @@
 FORCE_INLINE double Square(double a) { return a * a; }
 FORCE_INLINE double maxf(double a, double b) { if (a > b) { return a; } else { return b; } }
 
+
 int WindsimInit(Windsim *sim, World *w, size3D size)
 {
     sim->world = w;
@@ -64,6 +65,7 @@ int WindsimInit(Windsim *sim, World *w, size3D size)
     err_alloc_sim_cells:
         return 0;
 }
+
 
 void WindcellInit
 (
@@ -101,7 +103,7 @@ void WindcellInit
 }
 
 
-double DesiredMassByDensity(double density, vector3Df dimension)
+FORCE_INLINE double DesiredMassByDensity(double density, vector3Df dimension)
 {
     // mass = density * volume
     double volume = dimension.x * dimension.y * dimension.z;
@@ -109,31 +111,19 @@ double DesiredMassByDensity(double density, vector3Df dimension)
 }
 
 
-double WindcellDensity(Windcell *cell)
+FORCE_INLINE double WindcellDensity(Windcell *cell)
 {
     // density = mass / volume
     return (cell->mass * cell->volume_reciprocal);
 }
 
 
-double WindcellPressure(Windcell *cell)
+FORCE_INLINE double WindcellPressure(Windcell *cell)
 {
     // http://www.st-andrews.ac.uk/~dib2/climate/pressure.html
     const double R_specific = 287.0; // should change based on moisture content
     return (WindcellDensity(cell) * cell->temperature * R_specific);
 }
-
-
-/*
-void WindcellPressurise(Windcell *cell)
-{
-    
-    cell->pressure = (cell->density * cell->temperature * 287.0);
-    // 287.0 should change based on moisture content
-}*/
-
-// pressure ~= (0.5 x density) x speed^2
-// speed = sqrt(2 * pressure / density)
 
 
 FORCE_INLINE Windcell *WindcellAtXYZ(Windsim *sim, size_t x, size_t y, size_t z)
@@ -146,6 +136,7 @@ FORCE_INLINE Windcell *WindcellAtXYZ(Windsim *sim, size_t x, size_t y, size_t z)
     ];
 }
 
+
 FORCE_INLINE Windcell *WindcellAtZI(Windsim *sim, size_t z, size_t i)
 {
     return &sim->cell
@@ -153,6 +144,7 @@ FORCE_INLINE Windcell *WindcellAtZI(Windsim *sim, size_t z, size_t i)
         (z * sim->size.y * sim->size.x) + i
     ];
 }
+
 
 static double TriangleExtendedOpposite
 (
@@ -189,9 +181,6 @@ void WindsimCellsInit(Windsim *sim)
         double depth = x * (1.0 + (double) z);
         altitude += depth * 0.5; // midpoint
         
-        printf("Windsim cell layer %d/%d, altitude %.2f\n",
-            (int) z, (int) sim->size.z -1, altitude);
-        
         // Find width of cell by extending a triangle from planet radius to
         // height of layer.
         double width = TriangleExtendedOpposite
@@ -207,9 +196,6 @@ void WindsimCellsInit(Windsim *sim)
             sim->world->dimension.y / (double) sim->size.y,
             altitude
         );
-        
-        printf("Windsim cell volume %.2fx%.2fx%.2f m\n",
-                width, height, depth);
         
         for (size_t i = 0; i < sim->size.x * sim->size.y; i++)
         {
@@ -245,39 +231,13 @@ void WindsimStepForce(Windsim *sim, size_t z, size_t i)
     // Cell weight by F=ma
     cell->weight = cell->mass * gravity;
     
+    // Pressure by surface area
     double pressure     = WindcellPressure(cell);
     double area_force_z = pressure * (cell->dimension.x * cell->dimension.y);
     cell->force_up      = area_force_z;
     cell->force_down    = area_force_z + cell->weight;
     
-    //if (i == 0)
-    if (0)
-    {
-        if (z == 0) { printf("\n"); }
-        
-        printf("cell layer %d: dimension %.0fx%.0fx%.0f mass %.0f weight %.0f pressure %.0f\n"
-               "               force: up %.0f MN, down %.0f MN\n",
-            (int) z,
-            cell->dimension.x,
-            cell->dimension.y,
-            cell->dimension.z,
-            cell->mass,
-            cell->weight,
-            pressure,
-            cell->force_up  / 1000000.0,
-            cell->force_down / 1000000.0
-            );
-    }
-    /*
-    printf("z%02d: h %.2f m, g %.2f m/s^2, density %.2f KG/m^3, mass %.2f kg, force of g %.2f N\n",
-        (int) z, height, gravity, cell->density, mass, force);
-    printf("     pressure: %.2f N/m^2 => %2f N vertical => %.2f N up, %.2f N down\n\n", cell->pressure,
-        cell->pressure * (1000.0 * 1000.0), upforce, downforce);
-    
-    printf("cell z%0d: h %.2f m, density %.2f KG/M^3, pressure %.2f\n",
-        (int) z, height, cell->density, cell->pressure);
-    */
-    
+    // Graph
     if (i == 0)
     {
         graphCell->size     = cell->dimension;
@@ -353,22 +313,16 @@ void WindsimStepMass(Windsim *sim, size_t z, size_t i)
     if (transfer > 0.0) { to = WindcellAtZI(sim, z-1, i); }
     else                { to = WindcellAtZI(sim, z+1, i); }
     
-    //if (i == 0)
-    if (0)
-        { printf("%d: transfer %.2f tons of %.2f tons\n",
-            (int) z, transfer / 1000.0, from->mass / 1000.0); }
-    
     // when transferring mass, it is travelling at a velocity
     // so we want to transfer momentum to a cell
     // p = mv
     double momentum1 = (fabs(transfer) * from->velocity.z);
     double momentum2 = (to->mass * to->velocity.z);
-    to->velocity.z = (momentum1 + momentum2) / to->mass;
+    to->velocity.z += (momentum1 + momentum2) / to->mass;
     
     // and an equal force in the opposite direction accordingly
     momentum2 = (from->mass * from->velocity.z);
     from->velocity.z -= (momentum1 + momentum2) / from->mass;
-    //cell->velocity.z = 0.0;
     
     transfer = ChangeMass(from, -fabs(transfer));
     ChangeMass(to, fabs(transfer));
