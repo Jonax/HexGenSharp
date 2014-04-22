@@ -92,7 +92,7 @@ Optional:
 
 
     git clone https://github.com/golightlyb/hexgen2014
-    cd hexgen2010
+    cd hexgen2014
     nano tup.config # turn target platforms on/off
     tup init
     tup upd
