@@ -1,4 +1,9 @@
 
+http://en.wikipedia.org/wiki/Thermal_radiation
+http://en.wikipedia.org/wiki/Black_body
+http://en.wikipedia.org/wiki/Emissivity
+
+
     // cell->torque = ||r|| ||F||;
     // moment = force × distance
     // at surface, moment = radius
