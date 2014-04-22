@@ -38,6 +38,10 @@ Improving over all previous releases:
 
 **LaTeX/PDF output:** Automatically generate a fancy PDF document of your world and its features using `pdflatex`. Alternatively use the generated LaTeX files as the basis for your own worldbuilding document.
 
+| ------------- |:-------------:| -----:|
+| [![Atmosphere](http://www.heroextant.net/hexgen2014/screenshots/2014/april/22-atmosphere1Dgraph-320x213.png)](http://www.heroextant.net/hexgen2014/screenshots/2014/april/22-atmosphere1Dgraph-1200x800.png) | TODO | TODO |
+
+
 
 <a name="download" />
 Download a Binary Package
