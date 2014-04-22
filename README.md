@@ -1,4 +1,4 @@
-[hexgen2014 world generator](www.heroextant.net/hexgen2014/)
+[hexgen2014 world generator](http://www.heroextant.net/hexgen2014/)
 ============================
 
 This is a program for creating nice looking images of a world map and simulating weather. Maps are randomly generated using entirely procedural methods.
