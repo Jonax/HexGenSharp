@@ -241,14 +241,3 @@ int GraphAtmosphere1D
     
     return 1;
 }
-
-
-
-
-
-
-
-
-
-
-

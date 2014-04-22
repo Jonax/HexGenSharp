@@ -32,6 +32,7 @@
 #include "graph/graph.h"
 #include "graph/pen.h"
 
+
 struct Grapher
 {
     Image glyphset[GRAPH_GLYPHSET_COUNT]; // TODO Glyphset struct with sizes

@@ -32,7 +32,9 @@
 #include "graph/draw.h"
 #include "graph/pen.h"
 #include <math.h>
+
 #define ROUGH_EPSILON 0.001
+
 
 void GraphPlotPixel(Image *buffer, Pen *pen, vector2Df xy)
 {
