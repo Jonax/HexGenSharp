@@ -1,6 +1,6 @@
 /*
  
- src/wgen/generator.h - state for the generator
+ src/graph/draw.h - graph drawing function prototypes
  
  ------------------------------------------------------------------------------
  
@@ -28,50 +28,35 @@
  
 */
 
-#include "base.h"
-#include "wgen/wgen.h"
+#ifndef HG14_GRAPH_DRAW_H
+#   define HG14_GRAPH_DRAW_H
+
 #include "graph/graph.h"
+#include "graph/pen.h"
 
-int GeneratorInit(Generator *g, unsigned int seed)
-{
-    g->rng = RNGNew(RNG_ISAAC, seed);
-    if (!g->rng) { X(RNGNew); }
-    
-    if (!ClockInit(&g->clock)) { X(ClockInit); }
-    
-    g->mask_sampler = SampleDefault;
-    g->mask_sampler_rsc = NULL;
-    
-    g->grapher = NULL;
-    
-    return 1;
-    
-    err_ClockInit:
-        RNGFree(g->rng);
-    err_RNGNew:
-        return 0;
-}
+void GraphPlot(Image *buffer, Pen *pen, vector2Df xy);
+void GraphDrawLine(Image *buffer, Pen *pen, vector2Df from, vector2Df to);
+void GraphDrawCircle(Image *buffer, Pen *pen, vector2Df center, double radius);
 
-
-int GeneratorUseGrapher(Generator *g, Grapher *grapher)
-{
-    if (!g) { X2(bad_arg, "NULL generator pointer"); }
-    
-    g->grapher = grapher;
-    
-    return 1;
-    
-    err_bad_arg:
-        return 0;
-}
-
-
-int GeneratorUseMaskSampler
+vector2Df GraphWrite
 (
-    Generator *g,
-    double (*sampler)(void *p, double x, double y, double w, double h)
-)
-{
-    g->mask_sampler = sampler;
-    return 1;
-}
+    Grapher *g,
+    Image *buffer,
+    int glyphset,
+    Pen *pen,
+    vector2Df pos,
+    const char *s
+);
+
+vector2Df GraphWriteSlanted
+(
+    Grapher *g,
+    Image *buffer,
+    int glyphset,
+    Pen *pen,
+    vector2Df pos,
+    vector2Df slant,
+    const char *s
+);
+
+#endif

@@ -33,23 +33,27 @@
 
 #include <stdlib.h>
 
-#define clock not_really_clock // avoid -Wshadow
-#define time  not_really_time // avoid -Wshadow
+#define clock clock_no_shadow // avoid -Wshadow due to "clock" being defned
+#define time  time_no_shadow  // avoid -Wshadow due to "time" being defined
 
 
 int ClockInit(Clock *clock)
 {
+    if (!clock)             { X2(bad_arg, "NULL clock pointer"); }
     if (!ClockReset(clock)) { X(reset_clock); }
     
     return 1;
     
     err_reset_clock:
+    err_bad_arg:
         return 0;
 }
 
 
 int ClockReset(Clock *clock)
 {
+    if (!clock) { X2(bad_arg, "NULL clock pointer"); }
+    
     clock->now = 0;
     clock->max_reported = 0;
     
@@ -64,12 +68,15 @@ int ClockReset(Clock *clock)
     return 1;
     
     err_get_time:
+    err_bad_arg:
         return 0;
 }
 
 
 int ClockSync(Clock *clock)
 {
+    if (!clock) { X2(bad_arg, "NULL clock pointer"); }
+    
     if (0 != gettimeofday(&clock->state, NULL))
     {
         X(get_time);
@@ -83,18 +90,26 @@ int ClockSync(Clock *clock)
     return 1;
     
     err_get_time:
+    err_bad_arg:
         return 0;
 }
 
 
 Millisecs ClockTime(Clock *clock)
 {
+    if (!clock) { X2(bad_arg, "NULL clock pointer"); }
+    
     return clock->now;
+    
+    err_bad_arg:
+        return 0;
 }
 
 
 Millisecs ClockMonotonicTime(Clock *clock)
 {
+    if (!clock) { X2(bad_arg, "NULL clock pointer"); }
+    
     if (clock->now > clock->max_reported)
     {
         clock->max_reported = clock->now;
@@ -102,24 +117,39 @@ Millisecs ClockMonotonicTime(Clock *clock)
     }
     
     return clock->max_reported;
+    
+    err_bad_arg:
+        return 0;
 }
 
 
 Millisecs ClockDiff(Clock *earliest, Clock *latest)
 {
+    if (!earliest) { X2(bad_arg, "NULL earliest clock pointer"); }
+    if (!latest)   { X2(bad_arg, "NULL latest clock pointer");   }
+    
     return (ClockTime(latest) - ClockTime(earliest));
+    
+    err_bad_arg:
+        return 0;
 }
 
 
 Millisecs ClockMonotonicDiff(Clock *earliest, Clock *latest)
 {
+    if (!earliest) { X2(bad_arg, "NULL earliest clock pointer"); }
+    if (!latest)   { X2(bad_arg, "NULL latest clock pointer");   }
+    
     return (ClockMonotonicTime(latest) - ClockMonotonicTime(earliest));
+    
+    err_bad_arg:
+        return 0;
 }
 
 
 double ClockFramesPerSecond(Millisecs frametime)
 {
-    double fps = 9999.0;
+    double fps = 1000.0;
     
     if (frametime != 0)
     {

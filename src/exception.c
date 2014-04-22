@@ -1,7 +1,24 @@
+/*
+
+ src/exception.c - Prints exceptions.
+ 
+ ------------------------------------------------------------------------------
+ 
+ This file is in the public domain; copyright has been disclaimed by the
+ author.
+ 
+ ------------------------------------------------------------------------------
+ 
+ This is called by macros defined in base.h; you will not call these functions
+ directly.
+ 
+*/
+
 #include "base.h"
 #include <stdio.h> // fprintf
 #include <string.h>
 #include <errno.h>
+
 
 void hg14_print_exception
 (
@@ -104,5 +121,3 @@ void hg14_print_warning
     
     fflush(stdout);
 }
-
-

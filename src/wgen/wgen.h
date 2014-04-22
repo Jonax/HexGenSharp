@@ -96,6 +96,7 @@ struct Generator
 {
     RNG *rng;
     Clock clock;
+    Grapher *grapher;
     
     World world;
     
@@ -119,9 +120,9 @@ struct Windcell
     double weight;
     vector3Df dimension_reciprocal;
     
-    // Forces
+    // Forces due to pressure
     double force_up;
-    double force_down;
+    double force_down; // differs due to gravity
     double force_north_south;
     double force_east_west;
 };
@@ -136,8 +137,19 @@ struct Windsim
     Windcell *cell;
     
     GraphAtmosphere1DCell *graphAtmosphere1DCell;
+    
+    Doubles2D elevation; // resampled to a smaller resolution
+    Doubles2D sunlight;  // resampled to a smaller resolution
+    Doubles2D albedo;    // resampled to a smaller resolution
 };
 
+
+// === atmosphere.c ===
+int WindsimInit(Windsim *sim, World *w, size3D size);
+void WindsimTeardown(Windsim *sim);
+int WindsimSampleWorld(Windsim *sim);
+int WindsimRun(Windsim *sim, Image *img, Image *graph, int it);
+int Windsim1D(Windsim *sim, World *w, size3D size);
 
 // === doubles2D.c ===
 int Doubles2DInit(Doubles2D *d, size2D size);
@@ -148,17 +160,12 @@ void Doubles2DNormaliseMaximum(Doubles2D *d);
 void Doubles2DClampFloorTo(Doubles2D *d, double min, double to);
 void Doubles2DClampCeilingTo(Doubles2D *d, double max, double to);
 void Doubles2DSquare(Doubles2D *d);
-int Doubles2DDownsample(Doubles2D *dest, Doubles2D *src);
+int  Doubles2DDownsample(Doubles2D *dest, Doubles2D *src);
 
 // === generator.c ===
 int GeneratorInit(Generator *g, unsigned int seed);
+int GeneratorUseGrapher(Generator *g, Grapher *grapher);
 int GeneratorUseMaskSampler(Generator *g, double (*sampler)(void *p, double x, double y, double w, double h));
-
-// === windsim.c ===
-int WindsimInit(Windsim *sim, World *w, size3D size);
-int WindsimSampleWorld(Windsim *sim);
-int WindsimRun(Windsim *sim, Image *img, Image *graph, int it);
-int Windsim1D(Windsim *sim, World *w, size3D size);
 
 // === world.c ===
 int WorldInit(World *w, Generator *g, size2D size);

@@ -40,14 +40,19 @@ int example(void)
     Windsim windsim;
     Image image, image_windsim, image_graph;
     
+    Grapher *grapher = GrapherNew();
+    if (!grapher) { X(GrapherNew); }
+    
     if (!ImageInit(&image, SIZE)) { X(ImageInit); }
     if (!ImageInit(&image_windsim, Size2D(48, 768))) { X(ImageInit); }
     if (!ImageInit(&image_graph, Size2D(1200, 800))) { X(ImageInit); } // 1800, 800
     
     if (!GeneratorInit(&generator, 0)) { X(GeneratorInit); }
     GeneratorUseMaskSampler(&generator, SampleCircleGradiant);
+    GeneratorUseGrapher(&generator, grapher);
+    
     if (!WorldInit(&world, &generator, SIZE)) { X(WorldInit); }
-    if (!WindsimInit(&windsim, &world, Size3D(64, 64, 24))) { X(WindsimInit); }
+    if (!WindsimInit(&windsim, &world, Size3D(4, 4, 24))) { X(WindsimInit); }
     
     WorldDefinePlanet
     (
@@ -132,6 +137,8 @@ int example(void)
         //if (i == 5) { WindsimRun(&windsim, &image_windsim); }
     }
     
+    GrapherFree(grapher);
+    
     return 1;
     
     err_WindsimInit:
@@ -139,6 +146,8 @@ int example(void)
     err_WorldInit:
     err_GeneratorInit:
     err_ImageInit:
+        GrapherFree(grapher);
+    err_GrapherNew:
         return 0;
 }
 

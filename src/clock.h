@@ -31,6 +31,8 @@
  
  This ClockMonotonic implementation should always go forwards.
  
+ Note: This has not been tested AT ALL.
+ 
 */
 
 

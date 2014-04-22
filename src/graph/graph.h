@@ -31,8 +31,23 @@
 #ifndef HG14_GRAPH_H
 #   define HG14_GRAPH_H
 
+#define GRAPH_GLYPHSET_NORMAL 0
+#define GRAPH_GLYPHSET_COUNT  1
+
 #include "types.h" // e.g. size2D, vector3Df
 #include "image.h"
+
+
+/* === Grapher === */
+
+typedef struct Grapher Grapher;
+
+Grapher *GrapherNew(void);
+void GrapherFree(Grapher *g);
+Image *GrapherGlyphset(Grapher *g, int index);
+
+
+/* === GraphAtmosphere1D === */
 
 typedef struct GraphAtmosphere1DCell GraphAtmosphere1DCell;
 
@@ -47,6 +62,7 @@ struct GraphAtmosphere1DCell
 
 int GraphAtmosphere1D
 (
+    Grapher *g,
     const char *title,
     Image *buffer,
     size_t layers,

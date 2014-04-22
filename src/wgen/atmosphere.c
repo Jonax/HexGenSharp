@@ -1,6 +1,6 @@
 /*
  
- src/wgen/windsim.c - wind simulation
+ src/wgen/atmosphere.c - atmosphere climate & weather simulation
  
  ------------------------------------------------------------------------------
  
@@ -26,24 +26,33 @@
  
  ------------------------------------------------------------------------------
  
- Wind simulation as a cellular automation. For more information, please see
- the series of posts on the Hero Extant Development Blog:
+ Atmosphere simulation as a cellular automation. For more information, please
+ see the series of posts on the Hero Extant Development Blog:
  
  http://www.heroextant.net/blog/post/news/20140416-lets-simulate-a-planet-atmosphere-air-pressure-air-density.html
+ 
+ This factors things like direct solar radiation, albedo of surface material,
+ etc, into a simulation of a 3D atmosphere considering air temperature, air
+ pressure, air density, wind speed, etc.
  
 */
 
 #include "wgen/wgen.h"
-#include "graph/graph.h"
+#include "graph/graph.h" // pretty graphs
 #include <math.h>
 #include <stdio.h>
-
-FORCE_INLINE double Square(double a) { return a * a; }
-FORCE_INLINE double maxf(double a, double b) { if (a > b) { return a; } else { return b; } }
 
 
 int WindsimInit(Windsim *sim, World *w, size3D size)
 {
+    if (!sim)       { X2(bad_arg, "NULL sim pointer"); }
+    if (!w)         { X2(bad_arg, "NULL world pointer"); }
+    if (size.x < 1) { X2(bad_arg, "size.x must be > 0"); }
+    if (size.y < 1) { X2(bad_arg, "size.y must be > 0"); }
+    if (size.z < 1) { X2(bad_arg, "size.z must be > 0"); }
+    
+    size2D xy = Size2D(size.x, size.y);
+    
     sim->world = w;
     sim->size = size;
     sim->elements = size.x * size.y * size.z;
@@ -58,12 +67,42 @@ int WindsimInit(Windsim *sim, World *w, size3D size)
     sim->graphAtmosphere1DCell = malloc(sizeof(GraphAtmosphere1DCell) * sim->size.z);
     if (!sim->graphAtmosphere1DCell) { X(alloc_graph_cells); }
     
+    /* 2D buffers for sampling information from the world map at a lower
+     * resolution */
+    if (!Doubles2DInit(&sim->elevation, xy)) { X(Doubles2DInit_elevation); }
+    if (!Doubles2DInit(&sim->sunlight,  xy)) { X(Doubles2DInit_sunlight);  }
+    if (!Doubles2DInit(&sim->albedo,    xy)) { X(Doubles2DInit_albedo);    }
+    
     return 1;
     
+    err_Doubles2DInit_albedo:
+        Doubles2DTeardown(&sim->sunlight);
+    err_Doubles2DInit_sunlight:
+        Doubles2DTeardown(&sim->elevation);
+    err_Doubles2DInit_elevation:
+        free(sim->graphAtmosphere1DCell);
     err_alloc_graph_cells:
         free(sim->cell);
     err_alloc_sim_cells:
+    err_bad_arg:
         return 0;
+}
+
+
+void WindsimTeardown(Windsim *sim)
+{
+    if (!sim) { X2(bad_arg, "NULL sim pointer"); }
+    
+    Doubles2DTeardown(&sim->albedo);
+    Doubles2DTeardown(&sim->sunlight);
+    Doubles2DTeardown(&sim->elevation);
+    free(sim->graphAtmosphere1DCell);
+    free(sim->cell);
+    
+    return;
+    
+    err_bad_arg:
+        return;
 }
 
 
@@ -77,7 +116,14 @@ void WindcellInit
     vector3Df dimension // m*m*m
 )
 {
-    if (!c) { X2(bad_argument, "NULL cell pointer"); }
+    if (!c)              { X2(bad_arg,            "NULL cell pointer"); }
+    if (altitude    < 0) { X2(bad_arg,    "altitude must be positive"); }
+    if (mass        < 0) { X2(bad_arg,        "mass must be positive"); }
+    if (temperature < 0) { X2(bad_arg, "temperature must be positive (Kelvin)"); }
+    if (moisture    < 0) { X2(bad_arg,    "moisture must be positive"); }
+    if (dimension.x < 0) { X2(bad_arg, "dimension.x must be positive"); }
+    if (dimension.y < 0) { X2(bad_arg, "dimension.y must be positive"); }
+    if (dimension.z < 0) { X2(bad_arg, "dimension.z must be positive"); }
     
     c->altitude    = altitude;
     c->mass        = mass;
@@ -98,7 +144,7 @@ void WindcellInit
     
     return;
     
-    err_bad_argument:
+    err_bad_arg:
         return;
 }
 
@@ -153,15 +199,29 @@ static double TriangleExtendedOpposite
     double extend
 )
 {
+    /* Given a triangle, with an unknown angle A, an opposite side of known
+     * length, a, and known adjacent sides, b and c, both of size radius,
+     * find the new length of side a in a triangle formed by extending the
+     * radius by a known distance.
+     * 
+     * In other words, we have a triangle formed by approximating an arc from
+     * the center of a planet of known radius, for a certain known size
+     * on the surface (given by the opposite argument). We want to know how
+     * much bigger the triangle at the top of the arc becomes at higher
+     * altitudes, given by the extend argument.
+     * 
+     * This is used to find the width of a simulation cell at higher altitudes
+     * from the surface of the planet. This is simply the cosine rule. */
+    
     // Cosine rule: a^2 = b^2 + c^2 - 2bc cosA
     double a = opposite;
     double b = radius;
     double c = radius;
-    double cosA = (Square(a) - Square(b) - Square(c)) / (-2.0 * b * c);
+    double cosA = (square(a) - square(b) - square(c)) / (-2.0 * b * c);
 
     b = radius + extend;
     c = radius + extend;
-    a = sqrt(Square(b) + Square(c) - (2.0 * b * c * cosA));
+    a = sqrt(square(b) + square(c) - (2.0 * b * c * cosA));
     
     return a;
 }
@@ -169,9 +229,21 @@ static double TriangleExtendedOpposite
 
 void WindsimCellsInit(Windsim *sim)
 {
+    if (!sim) { X2(bad_arg, "NULL sim pointer"); }
+    
+    /* Initialises a stack of cells over the simulation, the depth of each cell
+     * (I will generally use "depth" to describe height in the Z axis, reserving
+     * "height" for describing the Y axis) being smaller at lower altitudes
+     * in order to give greater accuracy at the more important area. Heights
+     * increase in proportion: 1, 2, 3, ... n.
+     * 
+     * Each cell is initialised with an approximation so that the simulation
+     * converges to realistic point as soon as possible.
+     * */
     double altitude = 0;
     double n = (double) sim->size.z + 1;
     
+    // for each layer
     for (size_t z = 0; z < sim->size.z; z++)
     {
         // smaller depths nearer the surface for accuracy
@@ -197,23 +269,30 @@ void WindsimCellsInit(Windsim *sim)
             altitude
         );
         
+        // for width and height
         for (size_t i = 0; i < sim->size.x * sim->size.y; i++)
         {
             Windcell *cell = WindcellAtZI(sim, z, i);
             
+            // initialise with an approximation
             WindcellInit
             (
                 cell,
                 altitude,
                 0.15 * width * height * depth, // air mass kg
-                273.15, // temperature 0 K
+                273.15, // temperature in Kelvin (0 C)
                 0.0, // moisture kg
                 Vector3Df(width, height, depth) // m*m*m
             );
         }
         
-        altitude += depth * 0.5; // beyond midpoint
+        altitude += depth * 0.5; // move beyond midpoint
     }
+    
+    return;
+    
+    err_bad_arg:
+        return;
 }
 
 
@@ -226,7 +305,7 @@ void WindsimStepForce(Windsim *sim, size_t z, size_t i)
     double altitude = cell->altitude;
     
     // Gravity at altitude by the inverse square law
-    double gravity = sim->world->gravity * Square(re /(re + altitude));
+    double gravity = sim->world->gravity * square(re /(re + altitude));
     
     // Cell weight by F=ma
     cell->weight = cell->mass * gravity;
@@ -246,13 +325,6 @@ void WindsimStepForce(Windsim *sim, size_t z, size_t i)
         graphCell->altitude = cell->altitude;
         graphCell->velocity = cell->velocity.z;
     }
-    
-    // cell->torque = ||r|| ||F||;
-    // moment = force × distance
-    // at surface, moment = radius
-    // m_a + m_b = m_c => I_a + I_b = I_c
-    
-    // http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
 }
 
 
@@ -288,12 +360,10 @@ void WindsimStepVelocity(Windsim *sim, size_t z, size_t i)
 }
 
 
-double ChangeMass(Windcell *cell, double ammount)
+FORCE_INLINE void WindcellChangeMass(Windcell *cell, double ammount)
 {
     cell->mass += ammount;
-    if (cell->mass < 0) { ammount -= cell->mass; cell->mass = 0; }
-    
-    return ammount;
+    ASSERT(cell->mass >= 0);
 }
 
 
@@ -324,8 +394,8 @@ void WindsimStepMass(Windsim *sim, size_t z, size_t i)
     momentum2 = (from->mass * from->velocity.z);
     from->velocity.z -= (momentum1 + momentum2) / from->mass;
     
-    transfer = ChangeMass(from, -fabs(transfer));
-    ChangeMass(to, fabs(transfer));
+    WindcellChangeMass(from, -fabs(transfer));
+    WindcellChangeMass(to,    fabs(transfer));
 }
 
 
@@ -368,8 +438,7 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
             }
         }
         
-        if (iteration % 250 == 0)
-        //if (1)
+        if (iteration % 500 == 0)
         //if ((iteration <= 50) || (iteration % 50 == 0))
         {
             char title[256];
@@ -377,7 +446,8 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
             sprintf(title, "iteration %d/%d", iteration, iterations - 1);
             sprintf(filegraph, ".windsim/graph/graph-%d.png", iteration);
             
-            GraphAtmosphere1D(title, graph, sim->size.z, sim->graphAtmosphere1DCell,
+            GraphAtmosphere1D(sim->world->generator->grapher, title, graph,
+                sim->size.z, sim->graphAtmosphere1DCell,
                 sim->world->radius, sim->world->gravity, sim->height);
             ImageSaveTo(graph, filegraph);
         }
@@ -385,123 +455,4 @@ int WindsimRun(Windsim *sim, Image *img, Image *graph, int iterations)
     
     return 1;
 }
-
-
-
-
-/* WIND:
- * 
- * http://www.srh.noaa.gov/jetstream/synoptic/wind.htm
- * http://www.aos.wisc.edu/~aalopez/aos101/wk11.html
- * http://eesc.columbia.edu/courses/ees/climate/lectures/atm_dyn.html
- * 
- * For day/night cycle (not implemented in hexgen2014: see Hero Extant proper).
- * http://en.wikipedia.org/wiki/Mountain_breeze_and_valley_breeze
- * http://en.wikipedia.org/wiki/Anabatic_wind
- *
- * Related to altitude & pressure: 
- * http://en.wikipedia.org/wiki/Katabatic_wind
- * http://en.wikipedia.org/wiki/Foehn_wind
- * http://en.wikipedia.org/wiki/Rain_shadow
- * http://en.wikipedia.org/wiki/Density_of_air
- * * http://en.wikipedia.org/wiki/Atmospheric_pressure#Altitude_atmospheric_pressure_variation
- * 
- * Global:
- * http://en.wikipedia.org/wiki/Intertropical_convergence_zone
- * http://en.wikipedia.org/wiki/Trade_wind
- * http://en.wikipedia.org/wiki/Prevailing_winds
- * http://en.wikipedia.org/wiki/Prevailing_winds#Effect_on_precipitation
- * http://en.wikipedia.org/wiki/Wind_speed
- *
- * Local:
- * http://en.wikipedia.org/wiki/Sea_breeze
- * http://en.wikipedia.org/wiki/Prevailing_winds#Circulation_in_elevated_regions
- * 
- * RAIN:
- * 
- * http://en.wikipedia.org/wiki/Rain#Causes
- * http://en.wikipedia.org/wiki/Dry_season
- * http://en.wikipedia.org/wiki/Tropical_rain_belt
- * 
- * MECHANICS:
- * http://www.st-andrews.ac.uk/~dib2/climate/pressure.html (p = R r T)
- * http://en.wikipedia.org/wiki/Primitive_equations
- * http://en.wikipedia.org/wiki/Barometric_formula
- * http://en.wikipedia.org/wiki/Bernoulli%27s_equation
- * http://en.wikipedia.org/wiki/Boyle's_law
- * 
- * BIOMES:
- * http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
- * http://en.wikipedia.org/wiki/Holdridge_life_zones
- * 
- */
-
-/*
- * Let's first model the Tropical rain belt across the solar equator.
- * This mechanism is convection.
- * 
- * Convection knowledge:
- * Air is heated by solar radiation, especially along the solar equator.
- * Hot air is less dense than cold air. Hot air rises. Cold air falls.
- * Warmer air is able to retain more moisture than colder air.
- * Moist air is less dense than dry air.
- * When the warmer air is replaced by colder air, the colder air cannot absorb
- *     moisture. The excess moisture coalesces and then falls as rain due to
- *     gravity.
- * 
- * -- So due to tilt of the earth, we have a rain belt that moves to follow the
- *    seasonal solar equator.
- * 
- * Altitude knowledge:
- * Temperature falls with altitude.
- * Air pressure falls linearly with altitude.
- * Air density generally falls with altitude.
- * Rising air cools, cool air increases in density, and condenses causing rain.
- * Density of air is inversely proportional to temperature (cold = dense)
- * This is more pronounced when a mountain forces air to rise quickly.
- * 
- * High density air from a high elevation going down a slope causes
- * Katabatic winds due to acceleration due to gravity.
- * These can be cold and intense. But sinking air warms which means it can
- * hold more water.
- * 
- * -- So we can model the effects of mountains which give interesting wind
- *    speeds, temperatures, and rain shadows.
- * 
- * Simulating air will need require measure of air moisture, air density, air
- * temperature, air speed, and a 3D position.
- * 
- * We will need to model what happens when air collides - friction,
- * elastic collision, etc.
- * 
- * Individual particles do not have density -- only a mass of air as a whole.
- * If we have enough particles, density is implicit (i.e. density = particles
- * divided by volume).
- * 
- * Let's try a simple model: cells across a grid of size 128x128x8
- * 
- * Convection:
- * -- Each cell can be heated/cooled by the land beneath it.
- * -- Each cell can receive moisture from the land beneath it.
- * -- Hot air increases pressure, so pushes out & up, reducing density in the
- *        current cell and increasing density in adjacent and (mainly) above
- *        cells (direction can be implicit due to adjacent cells of equal
- *        pressure all wanting to push up to a low pressure area
- *        instead of adjacently).
- * -- Cold air is denser, so pushes into less dense cells, reducing temperature.
- *        This is due to gravity. Pressure caused by density can be compared
- *        to pressure caused by kinetic energy from gravitational acceleration.
- * -- Cold cells can hold less moisture, so rain sooner and rain colder.
- * -- Raining reduces moisture held in a cell.
- * 
- * The key point is WIND MOVEMENT IS CAUSED BY DIFFERENCES IN PRESSURE
- * 
- * And at the end we want to display:
- * -- Wind speed at the surface cells.
- * -- Air pressure.
- * -- Rainfall quantity & temperature.
- */
-
-
-
 

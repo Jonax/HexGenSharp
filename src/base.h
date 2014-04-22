@@ -33,6 +33,16 @@
 
 #   define PROGID "hexgen2014"
 
+
+    /* Performance-impacting assertions; define HG14_DEBUG if debugging */
+#   ifdef HG14_DEBUG
+#       include <assert.h>
+#       define ASSERT(x) assert(x)
+#   else
+#       define ASSERT(x)
+#   endif
+
+
     /* Guess at minimum C spec version feature detection */
 #   if defined(__STDC__)
 #       define IS_C89

@@ -33,6 +33,8 @@
 
 #include "types.h"
 
+# define RGBA_SIZE 4
+# define RGBA_CHANNELS 4
 # define RGBA_WRITE1(p,c) \
     *(p++) = c; *p++ = c; *p++ = c; *p++ = 255;
 # define RGBA_WRITE3(p,r,g,b) \
@@ -46,12 +48,22 @@ struct Image
 {
     unsigned char *pixels;
     size2D size;
+    size_t elements;
     size_t bytes;
 };
 
-int ImageInit(Image *i, size2D size);
-int ImageSaveTo(Image *i, const char *path);
+int  ImageInit(Image *i, size2D size);
+void ImageTeardown(Image *i);
+
 int ImageLoad(Image *i, const unsigned char *data, size_t size);
-int ImageFill(Image *i, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+int ImageSaveTo(Image *i, const char *path);
+int ImageFill
+(
+    Image *i,
+    unsigned char r,
+    unsigned char g,
+    unsigned char b,
+    unsigned char a
+);
 
 #endif

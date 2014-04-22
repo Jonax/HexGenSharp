@@ -1,6 +1,6 @@
 /*
  
- src/wgen/generator.h - state for the generator
+ src/graph/graph.c - graph plotting
  
  ------------------------------------------------------------------------------
  
@@ -28,50 +28,72 @@
  
 */
 
-#include "base.h"
-#include "wgen/wgen.h"
+#include "graph/baked.h"
 #include "graph/graph.h"
+#include "graph/pen.h"
 
-int GeneratorInit(Generator *g, unsigned int seed)
+struct Grapher
 {
-    g->rng = RNGNew(RNG_ISAAC, seed);
-    if (!g->rng) { X(RNGNew); }
+    Image glyphset[GRAPH_GLYPHSET_COUNT]; // TODO Glyphset struct with sizes
+    Pen default_pen;
+};
+
+
+Grapher *GrapherNew(void)
+{
+    Grapher *g = malloc(sizeof(Grapher));
+    if (!g) { X(alloc_grapher); }
     
-    if (!ClockInit(&g->clock)) { X(ClockInit); }
+    if (!PenInit(&g->default_pen, PEN_BLACK, 0.5)) { X(init_pen); }
     
-    g->mask_sampler = SampleDefault;
-    g->mask_sampler_rsc = NULL;
+#   define GLYPHSET_LOAD(type, file) \
+        if (!ImageLoad(&g->glyphset[GRAPH_GLYPHSET_##type], file, file ## _len)) \
+            { X2(glyphset_load_##type, __STRING(file)); }
     
-    g->grapher = NULL;
+    GLYPHSET_LOAD(NORMAL, glyphs_13x16_png);
     
-    return 1;
+    return g;
     
-    err_ClockInit:
-        RNGFree(g->rng);
-    err_RNGNew:
-        return 0;
+    err_glyphset_load_NORMAL:
+    err_init_pen:
+        free(g);
+    err_alloc_grapher:
+        return NULL;
 }
 
 
-int GeneratorUseGrapher(Generator *g, Grapher *grapher)
+void GrapherFree(Grapher *g)
 {
-    if (!g) { X2(bad_arg, "NULL generator pointer"); }
+    if (!g) { X2(bad_arg, "NULL grapher pointer"); }
     
-    g->grapher = grapher;
+    for (size_t i = 0; i < GRAPH_GLYPHSET_COUNT; i++)
+    {
+        ImageTeardown(&g->glyphset[i]);
+    }
     
-    return 1;
+    free(g);
+    
+    return;
     
     err_bad_arg:
-        return 0;
+        return;
 }
 
 
-int GeneratorUseMaskSampler
-(
-    Generator *g,
-    double (*sampler)(void *p, double x, double y, double w, double h)
-)
+Image *GrapherGlyphset(Grapher *g, int index)
 {
-    g->mask_sampler = sampler;
-    return 1;
+    if (!g) { X2(bad_arg, "NULL grapher pointer"); }
+    
+    switch (index)
+    {
+        case GRAPH_GLYPHSET_NORMAL:
+            return &g->glyphset[index];
+        
+        default:
+            X(invalid_glyphset_id);
+    }
+    
+    err_invalid_glyphset_id:
+    err_bad_arg:
+        return NULL;
 }

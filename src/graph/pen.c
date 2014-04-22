@@ -1,6 +1,6 @@
 /*
  
- src/wgen/generator.h - state for the generator
+ src/graph/pen.c - graph pen settings
  
  ------------------------------------------------------------------------------
  
@@ -28,50 +28,23 @@
  
 */
 
-#include "base.h"
-#include "wgen/wgen.h"
-#include "graph/graph.h"
+#include "graph/pen.h"
 
-int GeneratorInit(Generator *g, unsigned int seed)
-{
-    g->rng = RNGNew(RNG_ISAAC, seed);
-    if (!g->rng) { X(RNGNew); }
-    
-    if (!ClockInit(&g->clock)) { X(ClockInit); }
-    
-    g->mask_sampler = SampleDefault;
-    g->mask_sampler_rsc = NULL;
-    
-    g->grapher = NULL;
-    
-    return 1;
-    
-    err_ClockInit:
-        RNGFree(g->rng);
-    err_RNGNew:
-        return 0;
-}
-
-
-int GeneratorUseGrapher(Generator *g, Grapher *grapher)
-{
-    if (!g) { X2(bad_arg, "NULL generator pointer"); }
-    
-    g->grapher = grapher;
-    
-    return 1;
-    
-    err_bad_arg:
-        return 0;
-}
-
-
-int GeneratorUseMaskSampler
+int PenInit
 (
-    Generator *g,
-    double (*sampler)(void *p, double x, double y, double w, double h)
+    Pen *pen,
+    unsigned char r,
+    unsigned char g,
+    unsigned char b,
+    unsigned char a,
+    double radius
 )
 {
-    g->mask_sampler = sampler;
+    pen->red   = r;
+    pen->green = g;
+    pen->blue  = b;
+    pen->alpha = a;
+    pen->radius = radius;
+    
     return 1;
 }

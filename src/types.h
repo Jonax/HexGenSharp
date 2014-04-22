@@ -284,6 +284,11 @@ HEADER_FUNC line2D Line2D(int x0, int y0, int x1, int y1)
 
 
 /* Auxiliary functions */
+HEADER_FUNC double square(double a)
+{
+    return a * a;
+}
+
 HEADER_FUNC double radians(double deg)
 {
     return (deg * 3.141592654 / 180.0);
