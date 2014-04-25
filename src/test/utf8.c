@@ -6,8 +6,8 @@
 #include <string.h>
 
 
-int ParseMultibyte(const char *string, size_t *len);
-size_t MultibyteBackwardsLength(const char *string, size_t start, size_t end);
+// int ParseMultibyte(const char *string, size_t *len);
+// size_t MultibyteBackwardsLength(const char *string, size_t start, size_t end);
 
 
 static int utf8_strlen(const char *msg)
