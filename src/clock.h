@@ -52,6 +52,12 @@ struct Clock
     
     struct timeval start;
     struct timeval state;
+    
+    /* get_time_of_day is a function pointer to function with same semantics as
+     * "return gettimeofday(tv, NULL)". Override this if you want to test the
+     * unit for things like time changing or going backwards to ensure that
+     * this implementation always ONLY ever ticks forwards. */
+    int (*get_time_of_day)(struct timeval *tv);
 };
 
 typedef struct Clock Clock;

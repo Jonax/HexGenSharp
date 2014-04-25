@@ -36,10 +36,18 @@
 #define clock clock_no_shadow // avoid -Wshadow due to "clock" being defned
 #define time  time_no_shadow  // avoid -Wshadow due to "time" being defined
 
+static int ClockGetTimeOfDay(struct timeval *tv)
+{
+    return gettimeofday(tv, NULL);
+}
+
 
 int ClockInit(Clock *clock)
 {
     if (!clock)             { X2(bad_arg, "NULL clock pointer"); }
+    
+    clock->get_time_of_day = ClockGetTimeOfDay;
+    
     if (!ClockReset(clock)) { X(reset_clock); }
     
     return 1;
@@ -57,7 +65,7 @@ int ClockReset(Clock *clock)
     clock->now = 0;
     clock->max_reported = 0;
     
-    if (0 != gettimeofday(&clock->start, NULL))
+    if (0 != clock->get_time_of_day(&clock->start))
     {
         X(get_time);
     }
@@ -77,7 +85,7 @@ int ClockSync(Clock *clock)
 {
     if (!clock) { X2(bad_arg, "NULL clock pointer"); }
     
-    if (0 != gettimeofday(&clock->state, NULL))
+    if (0 != clock->get_time_of_day(&clock->state))
     {
         X(get_time);
     }
@@ -150,6 +158,12 @@ Millisecs ClockMonotonicDiff(Clock *earliest, Clock *latest)
 double ClockFramesPerSecond(Millisecs frametime)
 {
     double fps = 1000.0;
+    
+    if (frametime < 0.0)
+    {
+        W("negative frametime");
+        return fps;
+    }
     
     if (frametime != 0)
     {

@@ -17,6 +17,7 @@
 */
 int ParseMultibyte(const char *string, size_t *len)
 {
+    if (!len) { return 0; }
     *len = 0;
     if (!string) { return 0; }
     
@@ -116,7 +117,7 @@ int ParseMultibyte(const char *string, size_t *len)
  * by <start> such that the returned length represents the length in bytes
  * of the last utf8 character in the string.
  * 
- * This does not validate that the charater is valid; use ParseMultibyte for
+ * This does not validate that the character is valid; use ParseMultibyte for
  * that.
  *
  * On failure, such as reaching the start of the string or reading an obviously

@@ -33,6 +33,11 @@ ifeq (@(LINUX64_ENABLED),yes)
 : foreach $(ROOTDIR)/src/wgen/*.c |>             $(LINUX64_CC) $(WARNINGS) -c %f -o %o |> hg14_l64_wgen_%B.o
 : foreach $(ROOTDIR)/src/vendor/stb_image/*.c |> $(LINUX64_CC) -c %f -o %o |> hg14_l64_%B.o
 
+: foreach $(ROOTDIR)/src/clock.c      |> $(LINUX64_CC) -c %f -o %o |> hg14test_l64_%B.o
+: foreach $(ROOTDIR)/src/exception.c  |> $(LINUX64_CC) -c %f -o %o |> hg14test_l64_%B.o
+: foreach $(ROOTDIR)/src/utf8.c       |> $(LINUX64_CC) -c %f -o %o |> hg14test_l64_%B.o
+: foreach $(ROOTDIR)/src/test/*.c     |> $(LINUX64_CC) -c %f -o %o |> hg14test_l64_test_%B.o
+
 endif
 
 
@@ -78,6 +83,8 @@ endif
 
 ifeq (@(LINUX64_ENABLED),yes)
 : hg14_l64_*.o  |> $(LINUX64_LD) %f $(LIB) -o %o |> hexgen2014-linux64
+
+: hg14test_l64_*.o  |> $(LINUX64_LD) %f $(LIB) -o %o |> hexgen2014-test-linux64
 endif
 
 WINLIB = -lm

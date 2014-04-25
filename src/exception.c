@@ -19,6 +19,7 @@
 #include <string.h>
 #include <errno.h>
 
+int hg14_Xquiet = 0;
 
 void hg14_print_exception
 (
@@ -31,6 +32,7 @@ void hg14_print_exception
     int errnum
 )
 {
+    if (hg14_Xquiet) { return; }
     char errnobuf[256];
     
     if (!errnum)
@@ -82,6 +84,7 @@ void hg14_print_warning
     int errnum
 )
 {
+    if (hg14_Xquiet) { return; }
     char errnobuf[256];
     
     if (!errnum)
