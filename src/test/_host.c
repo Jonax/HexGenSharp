@@ -1,3 +1,41 @@
+/*
+
+ src/test/_host.h - Simple sandboxing test harness.
+ 
+ ------------------------------------------------------------------------------
+ 
+ Copyright (c) 2014 Ben Golightly <golightly.ben@googlemail.com>
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ 
+ ------------------------------------------------------------------------------
+ 
+ This is a simple test framework that uses fork to execute tests in a child
+ process so that abnormal termination (e.g. a segfault) can be caught and
+ treated as a failure.
+ 
+ See also: src/test/_plan.h which details the functions that are executed by
+ separate forked processes, in order, and /src/test/ *.c which are the actual
+ implementations of the tests.
+ 
+*/
+
 #include <sys/types.h>  // pid_t
 #include <sys/wait.h>   // waitpid
 #include <stdio.h>      // printf
@@ -8,7 +46,8 @@
 #include "base.h"       // X (exception)
 #include "test/_test.h"
 
-extern int hg14_Xquiet;
+extern int hg14_Xquiet; // src/exception.c
+
 
 int run(int (*fp)(void))
 {
@@ -26,9 +65,9 @@ int run(int (*fp)(void))
     }
     else if (pid == 0) // in child
     {
-        hg14_Xquiet = 1;
+        hg14_Xquiet = 1; // suppress all errors from src/exception.c
         int result = fp();
-        hg14_Xquiet = 0;
+        hg14_Xquiet = 0; // turn error reporting back on
         
         _Exit(result);
     }
@@ -56,6 +95,7 @@ int run(int (*fp)(void))
         return 0;
 }
 
+
 int test(int (*fp)(void), const char *name, const char *desc)
 {
     char align[16];
@@ -73,12 +113,14 @@ int test(int (*fp)(void), const char *name, const char *desc)
     return (run(fp));
 }
 
+
 void report(const char *file, int line, const char *expr)
 {
     fflush(stdout);
     printf("\nFAIL: %s:%d: (%s)", file, line, expr);
     fflush(stdout);
 }
+
 
 void result(Result r)
 {
@@ -99,6 +141,7 @@ void result(Result r)
     
     fflush(stdout);
 }
+
 
 int main(void)
 {

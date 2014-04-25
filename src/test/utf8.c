@@ -1,3 +1,5 @@
+// BSAG 2014. public domain.
+
 #include "utf8.h"
 #include "test/_test.h"
 #include <stdio.h>

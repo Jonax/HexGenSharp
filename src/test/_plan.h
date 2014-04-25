@@ -1,3 +1,5 @@
+// This test script is included by /src/test/_host.c:main()
+
 // === TEST: SRC/WGEN/GEOCOORDINATES ===
 
 // === TEST: SRC/CLOCK ===
