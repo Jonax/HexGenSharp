@@ -1,4 +1,31 @@
-# type hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name example-world
+# type hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name "Example World"
+
+DEFAULTS
+{
+    detail medium
+    planet earth
+    period 12-months-earth
+    map tropical
+    name Untitled World
+}
+
+DETAIL:overwhelmingly-high
+{
+    pixels (8192, 8192)
+    cells  (128, 128, 32)
+}
+
+DETAIL:extremely-high
+{
+    pixels  (4096, 4096)
+    cells   (64, 64, 24)
+}
+
+DETAIL:very-high
+{
+    pixels  (2048, 2048)
+    cells   (64, 64, 24)
+}
 
 DETAIL:high
 {
@@ -22,6 +49,12 @@ DETAIL:very-low
 {
     pixels  (256, 256)
     cells   (12, 12, 8)
+}
+
+DETAIL:extremely-low
+{
+    pixels  (256, 256)
+    cells   (8, 8, 8)
 }
 
 PLANET:earth
