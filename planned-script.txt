@@ -1,5 +1,8 @@
 # type hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name "Example World"
 
+# for sunlight do `convert -delay 10 -loop 0 sunlight-raw-*.png sunlight-animation-uk.gif`
+
+
 DEFAULTS
 {
     detail medium
