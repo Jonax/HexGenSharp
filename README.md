@@ -112,6 +112,9 @@ Comes with a graphical user interface. The compiler for this version is no longe
 * [Java port of the Hero Extant 2010 World Generator](https://github.com/avh4/hero-extant)  
 This is a Java version of the world generator backend suitable for including in Java projects.
 
+* [TT Tile Tools](http://www.deamonsouls.de/TT/)  
+This program uses the Java port of Hero Extant 2010 World Generator as one of the ways to generate map images.
+
 
 <a name="copying" />
 Free Software License
