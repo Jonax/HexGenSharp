@@ -70,11 +70,18 @@ int example(void)
         NORTHERN_SOLSTICE_EARTH
     );
     
+    /* WorldDefineArea
+    (
+        &world,
+        GeoCoordinate(GEOCOORDINATE_UK),
+        Vector3Df(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
+    ); */
+        
     WorldDefineArea
     (
         &world,
         GeoCoordinate("0N 0E"),
-        Vector3Df(12000.0, 12000.0, 10000.0)
+        Vector3Df(8000 * 1000.0, 8000 * 1000.0, 8850.0) // Tropical continent size
     );
     
     WindsimRun(&windsim,  &image_windsim, &image_graph, 100);

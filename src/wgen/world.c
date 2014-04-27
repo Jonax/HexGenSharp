@@ -329,6 +329,7 @@ double WorldLandMassProportion(World *w)
     return (((double) count) / ((double) w->elevation.elements));
 }
 
+
 int WorldCalculateDirectSolarRadiation(World *world, double orbit)
 {
     if (orbit < 0.0)             { X2(bad_arg,   "orbit must be >= 0.0");     }
@@ -379,7 +380,6 @@ int PlanetCalculateDirectSolarRadiation
     double mapsize              // kilometres between Northern- and Southern-most points
 )
 {
-    UNUSED(mapsize);
     double *v = buffer->values;
     
     // Denormalise orbit to a specific day
@@ -403,7 +403,7 @@ int PlanetCalculateDirectSolarRadiation
         double yoffset = (yrange - 0.5) * mapsize;
         
         geocoordinate ypoint = GeoCoordinateTranslate(map_center,
-            planet_radius * 6371, yoffset, 180.0);
+            planet_radius, yoffset, 180.0);
         
         // Radiation at a point
         double phi = radians(LatitudeToDouble(GeoCoordinateLatitude(ypoint)));

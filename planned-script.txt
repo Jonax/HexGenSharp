@@ -1,0 +1,63 @@
+# type hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name example-world
+
+DETAIL:high
+{
+    pixels  (1024, 1024)
+    cells   (32, 32, 24)
+}
+
+DETAIL:medium
+{
+    pixels  (512, 512)
+    cells   (24, 24, 16)
+}
+
+DETAIL:low
+{
+    pixels  (256, 256)
+    cells   (16, 16, 12)
+}
+
+DETAIL:very-low
+{
+    pixels  (256, 256)
+    cells   (12, 12, 8)
+}
+
+PLANET:earth
+{
+    radius 6371 km
+    gravity 9.81 m/s^2
+    distance-from-sun 1.0 au
+    solar-luminosity 1.0 relative
+    axial-tilt 23.5 degrees
+    northern-solstice 0.222 normalised
+    year 365 days
+}
+
+PERIOD:4-solstices-earth
+{
+    periods (March Equinox, 79, June Solstice, 93, September Equinox, 94, December Solstice, 90)
+    snapshot ends
+}
+
+PERIOD:12-months-earth
+{
+    periods (January, 31, February, 28, March, 31, April, 30, May, 31, June, 30, July, 31, August, 31, September, 30, October, 31, November, 30, December, 31)
+    snapshot midpoints
+}
+
+MAP:tropical
+{
+    size (8000 km, 8000 km, 8.85 km)
+    center 0N 0E
+    shape SampleCircleGradiant
+}
+
+MAP:british
+{
+    size (1000 km, 1000 km, 1.35 km)
+    center 54°2′41″N 2°46′46″W
+    shape SampleCircleGradiant
+}
+
