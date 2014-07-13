@@ -158,10 +158,71 @@ int example(void)
         return 0;
 }
 
-
-int main(void)
+int main_old(void)
 {
     if (!example()) { return EXIT_FAILURE; }
+    
+    return EXIT_SUCCESS;
+}
+
+
+void usage(void) { printf (
+"Hero Extant 2014 World Generator (command line)\n\n"
+"Usage: " PROGID " [-OPTION VALUE]... -from FILE [PATH]\n"
+"Generates a world using the given OPTIONS and defaults from FILE, outputting\n"
+"the result to a folder in the current directory or at PATH.\n"
+"e.g. " PROGID " -from hexgen2014.txt\n"
+"e.g. " PROGID " -from hexgen2014.txt ~/my-worlds\n"
+"e.g. " PROGID " -name \"My World\" -detail high -from hexgen2014.txt\n"
+"\n"
+"Usage: " PROGID " ?OPTION... -from FILE\n"
+"Prints acceptable values for a given option\n"
+"e.g. " PROGID " ?detail ?planet ?map -from hexgen2014.txt\n"
+"\n"
+"Options:\n"
+"    -dest (PATTERN)  PATTERN is a list of strings and tokens specifying the\n"
+"                       name of a created output directory\n"
+"                       e.g. -dest (name, \"-\", seed)\n"
+"    -detail DETAIL   select all options in FILE matching the given DETAIL type\n"
+"                       controlling output detail and weather simulation quality\n"
+"    -from FILE       FILE is a file specifying groups of default values and\n"
+"                       default values for command line arguments\n"
+"    -map MAP         select all options in FILE matching the given MAP type\n"
+"                       which controls the shape and weather of a generated map\n"
+"    -name NAME       names the generated world. If NAME contains spaces, it\n"
+"                       should be quoted e.g. -name \"My World\"\n"
+"    -outputs OUTPUTS selects all options in FILE matching the given OUTPUTS\n"
+"                       type controlling what is written by the program\n"
+"    -period PERIOD   select all options in FILE matching the given PERIOD type\n"
+"                       controlling snapshots of months or seasons\n"
+"    -planet PLANET   select all options in FILE matching the given PLANET type\n"
+"                       modelling the planet and solar system\n"
+"    -seed SEED       seed for the random number generator; use random for a\n"
+"                       seed based on current time, else any fixed integer\n"
+"    -verbosity 0-2   quantity of text printed to stdout, from 0 (minimal) to\n"
+"                      1 (normal) or 2 (extra). Defaults to 1\n"
+"    -years YRS       integer number of years to record. Defaults to 1\n"
+"\n"
+"Note that individual options can be overridden (-verbosity 2 is helpful for\n"
+"this) e.g. " PROGID " -map tropical -map-energy \"1.5 normalised\" -from...\n"
+"\n"
+"Information:\n"
+"    --help           display this page\n"
+"    --version        output version and copyright information and exit\n"
+"\n"
+"Exit status:\n"
+"    0 if OK,\n"
+"    1 if unable to parse FILE or command line arguments,\n"
+"    2 if unable to get write permissions,\n"
+"    3 on other program error\n"
+);}
+
+
+int main(int argc, char *argv[])
+{
+    UNUSED(argv);
+    
+    if (argc == 1) { usage(); } else { return main_old(); }
     
     return EXIT_SUCCESS;
 }

@@ -1,63 +1,106 @@
-# type hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name "Example World"
+# This is a defaults file for quickly specifying hexgen2014 world options
+# e.g. run `hexgen2014-linux64 -from hexgen2014.txt`
+
+# e.g.
+# hexgen2014-linux64 -detail high -planet earth -period 12-months-earth -map tropical -from modes.txt -name "Example World"
 
 # for sunlight do `convert -delay 10 -loop 0 sunlight-raw-*.png sunlight-animation-uk.gif`
 
-
+# DEFAULTS specify default command line options.
+# some of those options (e.g. -map) in turn select from a class of options
+# e.g. -map tropical, -map british
 DEFAULTS
 {
-    detail medium
-    planet earth
-    period 12-months-earth
-    map tropical
-    name Untitled World
+    -detail medium
+    -planet earth
+    -period 12-months-earth
+    -map tropical
+    -name Untitled World
+    -outputs final
+    -seed random
+    -verbosity 1
+    -dest ("hexgen2014-", name, "-", seed)
+    -years 1
+}
+
+OUTPUTS:all
+{
+    elevation  (raw, quick, nice)
+    sunlight   (raw, quick, nice)
+    simulation ((atmosphere1D, 25))
+    latex on
+    log on
+}
+
+OUTPUTS:final
+{
+    elevation  (raw, quick, nice)
+    sunlight   (raw, quick, nice)
+    latex on
+    log on
+}
+
+OUTPUTS:raw
+{
+    elevation  (raw)
+    sunlight   (raw)
+    log on
 }
 
 DETAIL:overwhelmingly-high
 {
     pixels (8192, 8192)
     cells  (128, 128, 32)
+    iterations 20000
 }
 
 DETAIL:extremely-high
 {
     pixels  (4096, 4096)
     cells   (64, 64, 24)
+    iterations 10000
 }
 
 DETAIL:very-high
 {
     pixels  (2048, 2048)
     cells   (64, 64, 24)
+    iterations 10000
 }
 
 DETAIL:high
 {
     pixels  (1024, 1024)
     cells   (32, 32, 24)
+    iterations 10000
 }
 
 DETAIL:medium
 {
     pixels  (512, 512)
     cells   (24, 24, 16)
+    iterations 10000
 }
 
 DETAIL:low
 {
     pixels  (256, 256)
     cells   (16, 16, 12)
+    iterations 7500
 }
 
 DETAIL:very-low
 {
     pixels  (256, 256)
     cells   (12, 12, 8)
+    iterations 5000
 }
 
 DETAIL:extremely-low
 {
     pixels  (256, 256)
     cells   (8, 8, 8)
+    iterations 4000
 }
 
 PLANET:earth
@@ -73,14 +116,30 @@ PLANET:earth
 
 PERIOD:4-solstices-earth
 {
-    periods (March Equinox, 79, June Solstice, 93, September Equinox, 94, December Solstice, 90)
+    periods ((March Equinox, 79), \
+             (June Solstice, 93), \
+             (September Equinox, 94), \
+             (December Solstice, 90))
     snapshot ends
+    require-planet earth
 }
 
 PERIOD:12-months-earth
 {
-    periods (January, 31, February, 28, March, 31, April, 30, May, 31, June, 30, July, 31, August, 31, September, 30, October, 31, November, 30, December, 31)
+    periods ((January, 31), \
+             (February, 28), \
+             (March, 31), \
+             (April, 30), \
+             (May, 31), \
+             (June, 30), \
+             (July, 31), \
+             (August, 31), \
+             (September, 30), \
+             (October, 31), \
+             (November, 30), \
+             (December, 31))
     snapshot midpoints
+    require-planet earth
 }
 
 MAP:tropical
@@ -88,6 +147,11 @@ MAP:tropical
     size (8000 km, 8000 km, 8.85 km)
     center 0N 0E
     shape SampleCircleGradiant
+    reject-edge (left, right, top, bottom)
+    reject-land-minimum 0.1 normalised
+    reject-land-maximum 1.0 normalised
+    energy     1.5 relative
+    turbulence 0.25 relative
 }
 
 MAP:british
@@ -95,5 +159,10 @@ MAP:british
     size (1000 km, 1000 km, 1.35 km)
     center 54°2′41″N 2°46′46″W
     shape SampleCircleGradiant
+    reject-edge (left, right, top, bottom)
+    reject-land-minimum 0.1 normalised
+    reject-land-maximum 1.0 normalised
+    energy     1.5 relative
+    turbulence 0.25 relative
 }
 
