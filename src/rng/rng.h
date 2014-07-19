@@ -43,7 +43,7 @@
     (4) ... and rand_r() isn't portable either
  
  IMPORTANT NOTICE: obviously not thread safe. Allocate individual RNGs for each
- task or thread.
+ task or thread, or synchronise with mutexes appropriately.
  
 */
 

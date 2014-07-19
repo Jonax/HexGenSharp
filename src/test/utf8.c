@@ -6,11 +6,7 @@
 #include <string.h>
 
 
-// int ParseMultibyte(const char *string, size_t *len);
-// size_t MultibyteBackwardsLength(const char *string, size_t start, size_t end);
-
-
-static int utf8_strlen(const char *msg)
+static ssize_t utf8_strlen(const char *msg)
 {
     size_t str_len = 0;
     size_t char_len = 0;
@@ -24,11 +20,11 @@ static int utf8_strlen(const char *msg)
         msg += char_len;
     }
     
-    return str_len;
+    return (ssize_t) str_len;
 }
 
 
-static int utf8_strlen2(const char *msg)
+static ssize_t utf8_strlen2(const char *msg)
 {
     size_t str_len = 0;
     size_t end = strlen(msg);
@@ -43,7 +39,7 @@ static int utf8_strlen2(const char *msg)
         str_len++;
     }
     
-    return str_len;
+    return (ssize_t) str_len;
 }
 
 

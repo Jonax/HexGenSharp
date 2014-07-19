@@ -363,7 +363,7 @@ void WindsimStepVelocity(Windsim *sim, size_t z, size_t i)
 FORCE_INLINE void WindcellChangeMass(Windcell *cell, double ammount)
 {
     cell->mass += ammount;
-    ASSERT(cell->mass >= 0);
+    DEBUG_ASSERT(cell->mass >= 0);
 }
 
 

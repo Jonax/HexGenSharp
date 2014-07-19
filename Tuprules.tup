@@ -1,8 +1,6 @@
 #-------------------------------------------------------------------------------
-# Tup Build Script for hexgen2014
-#
-# See https://github.com/golightlyb/hexgen2014
-# See gittup.org/tup/
+# Tup Build Script common logic
+# This is generic to any build
 #-------------------------------------------------------------------------------
 # See also /tup.config, /bin/Tupfile
 #-------------------------------------------------------------------------------
@@ -14,8 +12,8 @@
 ROOTDIR = $(TUP_CWD)
 
 CFLAGS_COMMON  = -pipe -malign-double
-CFLAGS_LINUX   = -DHG14_LINUX
-CFLAGS_WINDOWS = -DHG14_WINDOWS
+CFLAGS_LINUX   = -DBSE_LINUX
+CFLAGS_WINDOWS = -DBSE_WINDOWS
 
 LFLAGS_COMMON  = 
 LFLAGS_LINUX   = 
@@ -66,12 +64,16 @@ WARNINGS += -Wcast-qual -Winit-self -Wwrite-strings -Winline -Wundef
 
 INCLUDE  = -iquote $(TUP_CWD)/src/
 
-CFLAGS_COMMON += -std=c99 -pedantic -D_XOPEN_SOURCE_EXTENDED $(INCLUDE)
+CFLAGS_COMMON += -std=c99 -pedantic $(INCLUDE)
+CFLAGS_COMMON += -D_XOPEN_SOURCE=700 -D_XOPEN_SOURCE_EXTENDED=1
 
-LINUX32_CC = @(LINUX32_CC) $(CFLAGS_COMMON) $(CFLAGS_LINUX) -DHG14_32BIT
-LINUX64_CC = @(LINUX64_CC) $(CFLAGS_COMMON) $(CFLAGS_LINUX) -DHG14_64BIT
-WIN32_CC   = @(WIN32_CC)   $(CFLAGS_COMMON) $(CFLAGS_WINDOWS) -DHG14_32BIT
-WIN64_CC   = @(WIN64_CC)   $(CFLAGS_COMMON) $(CFLAGS_WINDOWS) -DHG14_64BIT
+# Windows 64 needs this to properly support large files
+LARGEFILE = -D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64
+
+LINUX32_CC = @(LINUX32_CC) $(CFLAGS_COMMON) $(CFLAGS_LINUX) $(LARGEFILE) -DBSE_BITSPACE=32
+LINUX64_CC = @(LINUX64_CC) $(CFLAGS_COMMON) $(CFLAGS_LINUX) $(LARGEFILE) -DBSE_BITSPACE=64
+WIN32_CC   = @(WIN32_CC)   $(CFLAGS_COMMON) $(CFLAGS_WINDOWS) $(LARGEFILE) -DBSE_BITSPACE=32
+WIN64_CC   = @(WIN64_CC)   $(CFLAGS_COMMON) $(CFLAGS_WINDOWS) $(LARGEFILE) -DBSE_BITSPACE=64
 
 LINUX32_LD = @(LINUX32_LD) $(LFLAGS_COMMON)
 LINUX64_LD = @(LINUX64_LD) $(LFLAGS_COMMON)

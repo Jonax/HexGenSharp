@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <math.h> // log
 
+#define PI 3.14159265359
+
+
 int WorldInit(World *w, Generator *g, size2D size)
 {
     if (!w) { X2(bad_arg, "NULL world pointer");}
@@ -159,7 +162,7 @@ static void WorldApplyNoise
     Doubles2D *elevation = &w->elevation;
     
     // longest length
-    size_t length = max_size_t(elevation->size.x, elevation->size.y);
+    size_t length = size_t_max(elevation->size.x, elevation->size.y);
     
     /* This function applies multiple octaves of noise in order to generate an
      * interesting heightmap.

@@ -104,15 +104,15 @@ RNG *RNGNew(unsigned int type, unsigned int seed)
             r->impl.isaac = IsaacNew(seed);
             if (!r->impl.isaac) { X2(alloc_impl_RNG, "isaac"); }
             
-            r->fill_uint8_t  = &IsaacFill_uint8_t;
-            r->fill_uint32_t = &IsaacFill_uint32_t;
-            r->fill_float    = &IsaacFill_float;
-            r->fill_double   = &IsaacFill_double;
+            r->fill_uint8_t  = IsaacFill_uint8_t;
+            r->fill_uint32_t = IsaacFill_uint32_t;
+            r->fill_float    = IsaacFill_float;
+            r->fill_double   = IsaacFill_double;
             
-            r->next_uint8_t = &IsaacNext_uint8_t;
-            r->next_uint32_t = &IsaacNext_uint32_t;
-            r->next_float    = &IsaacNext_float;
-            r->next_double   = &IsaacNext_double;
+            r->next_uint8_t  = IsaacNext_uint8_t;
+            r->next_uint32_t = IsaacNext_uint32_t;
+            r->next_float    = IsaacNext_float;
+            r->next_double   = IsaacNext_double;
             
             r->impl_void_ptr = r->impl.isaac;
             break;

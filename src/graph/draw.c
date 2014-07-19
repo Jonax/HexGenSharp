@@ -28,6 +28,7 @@
  
 */
 
+#include "base.h"
 #include "graph/graph.h"
 #include "graph/draw.h"
 #include "graph/pen.h"

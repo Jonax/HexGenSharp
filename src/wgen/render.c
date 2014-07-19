@@ -8,7 +8,7 @@ int WorldRender_Elevation_Raw(World *w, Image *m)
     double *v = e->values;
     unsigned char *p = m->pixels;
     
-    if (!Size2DEqual(e->size, m->size)) { X(interpolation_not_implemented); }
+    if (!size2D_equal(e->size, m->size)) { X(interpolation_not_implemented); }
     
     for (size_t y = 0; y < e->size.y; y++)
     {
@@ -31,7 +31,7 @@ int WorldRender_Elevation_Quick(World *w, Image *m)
     double *v = e->values;
     unsigned char *p = m->pixels;
     
-    if (!Size2DEqual(e->size, m->size)) { X(interpolation_not_implemented); }
+    if (!size2D_equal(e->size, m->size)) { X(interpolation_not_implemented); }
     
     for (size_t y = 0; y < e->size.y; y++)
     {
@@ -71,7 +71,7 @@ int WorldRender_Sunlight_Raw(World *w, Image *m)
     double *v = e->values;
     unsigned char *p = m->pixels;
     
-    if (!Size2DEqual(e->size, m->size)) { X(interpolation_not_implemented); }
+    if (!size2D_equal(e->size, m->size)) { X(interpolation_not_implemented); }
     
     for (size_t y = 0; y < e->size.y; y++)
     {
@@ -95,7 +95,7 @@ int WorldRender_Sunlight_Quick(World *w, Image *m)
     double *s = w->sunlight.values;
     unsigned char *p = m->pixels;
     
-    if (!Size2DEqual( w->elevation.size, m->size)) { X(interpolation_not_implemented); }
+    if (!size2D_equal( w->elevation.size, m->size)) { X(interpolation_not_implemented); }
     
     for (size_t y = 0; y <  w->elevation.size.y; y++)
     {

@@ -8,3 +8,8 @@
 /*.gif
 /test.out
 /cppcheck.txt
+/hexgen*.config
+/hexgen*.creator
+/hexgen*.files
+/hexgen*.includes
+/hexgen*.user
