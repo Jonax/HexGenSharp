@@ -37,7 +37,7 @@ namespace HexgenSharp2014
 
 		private IMask mask;
 
-        public World(Size size, SimplexNoise noise)
+        public World(Size size, SimplexNoise noise, IMask mask = null)
         {
 			Debug.Assert(size.Width > 0, "Bad size");
 			Debug.Assert(size.Height > 0, "Bad size");
@@ -50,6 +50,8 @@ namespace HexgenSharp2014
 
 			_elevation = new Doubles2D(size);
 			_sunlight = new Doubles2D(size);
+
+			this.mask = mask ?? new MaskBase();
 		}
 
         public void DefinePlanet(
@@ -99,7 +101,7 @@ namespace HexgenSharp2014
             double circumference = 2.0 * Math.PI * Radius;
             Debug.Assert(circumference >= dimension.X, "dimension.x is too large for the planet radius");
             Debug.Assert(circumference >= dimension.Y, "dimension.y is too large for the planet radius");
-            Debug.Assert(dimension.Z >= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
+            Debug.Assert(dimension.Z <= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
 
             Center = center;
             Dimension = dimension;
@@ -178,7 +180,7 @@ namespace HexgenSharp2014
 			}
 		}
 
-		private void GenerateHeightmap(
+		public void GenerateHeightmap(
 			double energy,			// 0.6 to 3.0.  Higher == more islands
 			double turbulance)		// -0.5 to 1.0. Controls shape and contrast
 		{
@@ -201,7 +203,7 @@ namespace HexgenSharp2014
 			_elevation.Normalise();
 		}
 
-		private bool LandmassAtTopEdge
+		public bool LandmassAtTopEdge
 		{
 			get
 			{
@@ -213,7 +215,7 @@ namespace HexgenSharp2014
 			}
 		}
 
-		private bool LandmassAtBottomEdge
+		public bool LandmassAtBottomEdge
 		{
 			get
             {
@@ -226,7 +228,7 @@ namespace HexgenSharp2014
 			}
 		}
 
-		private bool LandmassAtLeftEdge
+		public bool LandmassAtLeftEdge
 		{
 			get
 			{
@@ -242,7 +244,7 @@ namespace HexgenSharp2014
 			}
 		}
 
-		private bool LandmassAtRightEdge
+		public bool LandmassAtRightEdge
 		{
 			get
 			{
@@ -258,7 +260,7 @@ namespace HexgenSharp2014
 			}
 		}
 
-		private double LandMassProportion
+		public double LandMassProportion
 		{
 			get
 			{

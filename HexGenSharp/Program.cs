@@ -49,7 +49,7 @@ namespace HexgenSharp2014
 
             SimplexNoise noiseGen = new SimplexNoise(stream.GetBuffer());
 
-            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen);
+            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen, new CircleGradiantMask());
             testWorld.DefinePlanet(
                 radius: 6371000.0, // radius
                 gravity: 9.81, // g
@@ -71,7 +71,54 @@ namespace HexgenSharp2014
             windSim.Init(testWorld, 4, 4, 24);
             windSim.RunWindSim(100);
 
-            testWorld.RenderElevationRaw(testWorld, "testOutput.png");
-        }
+			// JW - Certainly has to be a better way of handling this.  Move it to inside World?
+			while (true)
+			{
+				testWorld.GenerateHeightmap(1.5, 0.25);
+
+				if (testWorld.LandmassAtTopEdge)
+				{
+					Console.WriteLine("REJECT heightmap: landmass at top edge");
+					continue;
+				}
+
+				if (testWorld.LandmassAtBottomEdge)
+				{
+					Console.WriteLine("REJECT heightmap: landmass at bottom edge");
+					continue;
+				}
+
+				if (testWorld.LandmassAtLeftEdge)
+				{
+					Console.WriteLine("REJECT heightmap: landmass at left edge");
+					continue;
+				}
+
+				if (testWorld.LandmassAtRightEdge)
+				{
+					Console.WriteLine("REJECT heightmap: landmass at right edge");
+					continue;
+				}
+
+				if (testWorld.LandMassProportion < 0.10)	// TODO user limit
+				{
+					Console.WriteLine("REJECT heightmap: landmass proportion too low");
+					continue;
+				}
+
+				if (testWorld.LandMassProportion > 1.00)	// TODO user limit
+				{
+					Console.WriteLine("REJECT heightmap: landmass proportion too high");
+					continue;
+				}
+
+				break;
+			}
+
+			testWorld.RenderElevationRaw(testWorld, "test_elevation_raw.png");
+			testWorld.RenderElevationQuick(testWorld, "test_elevation_quick.png");
+			testWorld.RenderSunlightRaw(testWorld, "test_sunlight_raw.png");
+			testWorld.RenderSunlightQuick(testWorld, "test_sunlight_quick.png");
+		}
     }
 }
