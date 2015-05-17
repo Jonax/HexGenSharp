@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.22609.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HexGenSharp", "HexGenSharp\HexGenSharp.csproj", "{E6A0203C-316D-4FA7-A6AB-4345932924FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Debug|x64.ActiveCfg = Debug|x64
+		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Debug|x64.Build.0 = Debug|x64
+		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Release|x64.ActiveCfg = Release|x64
+		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
