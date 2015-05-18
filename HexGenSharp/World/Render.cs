@@ -6,119 +6,99 @@ using System.Threading.Tasks;
 using ImageMagick;
 using System.Diagnostics;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
     public partial class World
     {
-        public void RenderElevationRaw(World world, string path)
+        public void RenderElevation(string path, bool raw = false)
         {
-            byte[] pixels = world._elevation.Nodes
-                                 .SelectMany(h => new byte[] { Convert.ToByte(255 * h), Convert.ToByte(255 * h), Convert.ToByte(255 * h) })
-                                 .ToArray();
+            byte[] pixels;
+            if (raw)
+            {
+                pixels = _elevation.Nodes
+                                   .SelectMany(h => new byte[] { Convert.ToByte(255 * h), Convert.ToByte(255 * h), Convert.ToByte(255 * h) })
+                                   .ToArray();
+            }
+            else
+            {
+                pixels = _elevation.Nodes
+                                   .SelectMany(h =>
+                                   {
+                                       if (h < World.SEA_LEVEL)
+                                       {
+                                           return new byte[]
+                                           {
+                                               Convert.ToByte(32.0 + (32.0 * h)),
+                                               Convert.ToByte(64.0 + (255.0 * h)),
+                                               Convert.ToByte(128.0 + (128.0 * h))
+                                           };
+                                       }
+                                       else
+                                       {
+                                           return new byte[]
+                                           {
+                                               Convert.ToByte(64.0 + (32.0 * h)),
+                                               Convert.ToByte(128.0 + (64.0 * h)),
+                                               64
+                                           };
+                                       }
+                                   })
+                                   .ToArray();
+            }
 
             // Using RGB so 3 (C version uses RGBA so 4)
-            using (MagickImage image = new MagickImage(pixels, new MagickReadSettings()
+            using (MagickImage image = new MagickImage(new MagickColor(255, 0, 255), (int)_elevation.Width, (int)_elevation.Height))
             {
-                Width = (int)world._elevation.Width,
-                Height = (int)world._elevation.Height,
-                Format = MagickFormat.Rgb
-            }))
-            {
+                image.GetWritablePixels().Set(pixels);
+
                 image.Format = MagickFormat.Png32;
 
                 image.Write(path);
             }
         }
 
-        public void RenderElevationQuick(World world, string path)
+        public void RenderSunlight(string path, bool raw = false)
         {
-            byte[] pixels = world._elevation.Nodes
-                                 .SelectMany(h =>
-                                 {
-                                     if (h < World.SEA_LEVEL)
-                                     {
-                                        return new byte[]
-                                        {
-                                             Convert.ToByte(32.0 + (32.0 * h)),
-                                             Convert.ToByte(64.0 + (255.0 * h)),
-                                             Convert.ToByte(128.0 + (128.0 * h))
-                                        };
-                                     }
-                                     else
-                                     {
-                                         return new byte[]
-                                         {
-                                             Convert.ToByte(64.0 + (32.0 * h)),
-                                             Convert.ToByte(128.0 + (64.0 * h)),
-                                             64
-                                         };
-                                     }
-                                 })
-                                 .ToArray();
-
-            // Using RGB so 3 (C version uses RGBA so 4)
-            using (MagickImage image = new MagickImage(pixels, new MagickReadSettings()
-                                                               {
-                                                                   Width = (int)world._elevation.Width,
-                                                                   Height = (int)world._elevation.Height,
-                                                                   Format = MagickFormat.Rgb
-                                                               }))
+            byte[] pixels;
+            if (raw)
             {
-                image.Write(path);
+                pixels = _sunlight.Nodes
+                                  .SelectMany(s => new byte[] { Convert.ToByte(255 * s), Convert.ToByte(255 * s), Convert.ToByte(255 * s) })
+                                  .ToArray();
             }
-        }
-
-        public void RenderSunlightRaw(World world, string path)
-        {
-            byte[] pixels = world._sunlight.Nodes
-                                 .SelectMany(s => new byte[] { Convert.ToByte(255 * s), Convert.ToByte(255 * s), Convert.ToByte(255 * s) })
-                                 .ToArray();
-
-            // Using RGB so 3 (C version uses RGBA so 4)
-            using (MagickImage image = new MagickImage(pixels, new MagickReadSettings()
+            else
             {
-                Width = (int)world._sunlight.Width,
-                Height = (int)world._sunlight.Height,
-                Format = MagickFormat.Rgb
-            }))
-            {
-                image.Write(path);
+                pixels = _sunlight.Nodes
+                                  .Zip(_elevation.Nodes, (s, e) =>
+                                  {
+                                      if (e < World.SEA_LEVEL)
+                                      {
+                                          return new byte[]
+                                          {
+                                              32, 64, 128
+                                          };
+                                      }
+                                      else
+                                      {
+                                          return new byte[]
+                                          {
+                                              Convert.ToByte(255.0 * s),
+                                              Convert.ToByte(128.0 * s),
+                                              Convert.ToByte(64.0 * s)
+                                          };
+                                      }
+                                  })
+                                  .SelectMany(h => h)
+                                  .ToArray();
             }
-        }
-
-        public void RenderSunlightQuick(World world, string path)
-        {
-            byte[] pixels = world._sunlight.Nodes
-                                 .Zip(world._elevation.Nodes, (s, e) =>
-                                 {
-                                     if (e < World.SEA_LEVEL)
-                                     {
-                                         return new byte[]
-                                         {
-                                             32, 64, 128
-                                         };
-                                     }
-                                     else
-                                     {
-                                         return new byte[]
-                                         {
-                                             Convert.ToByte(255.0 * s),
-                                             Convert.ToByte(128.0 * s),
-                                             Convert.ToByte(64.0 * s)
-                                         };
-                                     }
-                                 })
-                                 .SelectMany(h => h)
-                                 .ToArray();
 
             // Using RGB so 3 (C version uses RGBA so 4)
-            using (MagickImage image = new MagickImage(pixels, new MagickReadSettings()
-                                                        {
-                                                            Width = (int)world._elevation.Width,
-                                                            Height = (int)world._elevation.Height,
-                                                            Format = MagickFormat.Rgb
-                                                        }))
+            using (MagickImage image = new MagickImage(new MagickColor(255, 0, 255), (int)_sunlight.Width, (int)_sunlight.Height))
             {
+                image.GetWritablePixels().Set(pixels);
+
+                image.Format = MagickFormat.Png32;
+
                 image.Write(path);
             }
         }

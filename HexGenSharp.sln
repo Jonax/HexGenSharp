@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.22609.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HexGenSharp", "HexGenSharp\HexGenSharp.csproj", "{E6A0203C-316D-4FA7-A6AB-4345932924FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HexGenSharp.ExampleApplication", "HexGenSharp.ExampleApplication\HexGenSharp.ExampleApplication.csproj", "{F81C76F8-8F80-4AA0-ABD1-21DFF41938EE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E6A0203C-316D-4FA7-A6AB-4345932924FE} = {E6A0203C-316D-4FA7-A6AB-4345932924FE}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +20,10 @@ Global
 		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Debug|x64.Build.0 = Debug|x64
 		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Release|x64.ActiveCfg = Release|x64
 		{E6A0203C-316D-4FA7-A6AB-4345932924FE}.Release|x64.Build.0 = Release|x64
+		{F81C76F8-8F80-4AA0-ABD1-21DFF41938EE}.Debug|x64.ActiveCfg = Debug|x64
+		{F81C76F8-8F80-4AA0-ABD1-21DFF41938EE}.Debug|x64.Build.0 = Debug|x64
+		{F81C76F8-8F80-4AA0-ABD1-21DFF41938EE}.Release|x64.ActiveCfg = Release|x64
+		{F81C76F8-8F80-4AA0-ABD1-21DFF41938EE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

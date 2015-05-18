@@ -28,7 +28,7 @@
 
 using System;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
     /// <summary>
     /// Implementation of the Perlin simplex noise, an improved Perlin noise algorithm.

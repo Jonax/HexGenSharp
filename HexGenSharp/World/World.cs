@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Device.Location;
 using MathNet.Spatial.Euclidean;
-using HexgenSharp2014.Extensions;
+using HexGenSharp.Extensions;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
     public partial class World
     {

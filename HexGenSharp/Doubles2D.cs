@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
 	public class Doubles2D
 	{

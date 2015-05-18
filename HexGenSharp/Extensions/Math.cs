@@ -1,4 +1,4 @@
-﻿namespace HexgenSharp2014.Extensions
+﻿namespace HexGenSharp.Extensions
 {
 	static class MathEx
 	{

@@ -32,10 +32,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Linq;
-using HexgenSharp2014.Extensions;
+using HexGenSharp.Extensions;
 using System.Device.Location;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
     public class GeoCoordinateEx
     {

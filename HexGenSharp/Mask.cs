@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HexgenSharp2014
+namespace HexGenSharp
 {
 	public interface IMask
 	{
