@@ -20,7 +20,6 @@ namespace HexGenSharp
 
         // Derived
         double volume;
-        double volume_reciprocal;
         public double weight;
         public Vector3D dimension_reciprocal;
 
@@ -51,7 +50,6 @@ namespace HexGenSharp
             this.dimension = dimension;
 
             this.volume = this.dimension.X * this.dimension.Y * this.dimension.Z;
-            this.volume_reciprocal = 1.0 / this.volume;
 
             this.velocity = new Vector3D(0.0, 0.0, 0.0);
 
@@ -64,11 +62,7 @@ namespace HexGenSharp
 
         public double Density
         {
-            // density = mass / volume
-            get
-            {
-                return mass * volume_reciprocal;
-            }
+            get { return mass / volume; }
         }
 
         public double Pressure

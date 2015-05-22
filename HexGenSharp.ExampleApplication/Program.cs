@@ -6,11 +6,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using HexGenSharp;
+using System.Collections.Generic;
 
 namespace HexGenSharp.ExampleApplication
 {
     class Program
     {
+        private const double SEA_PROPORTION = 0.6;
+        public const double SEA_LEVEL = 0.15;
+
         private const double NORTHERN_SOLSTICE_EARTH = 0.222;
         private const double SEASONAL_TILT_EARTH = 23.5;
 
@@ -32,95 +36,71 @@ namespace HexGenSharp.ExampleApplication
         // Sample run
         static void Main(string[] args)
         {
-            uint timestamp = Convert.ToUInt32((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds);
-            MurmurHash3 murmur = new MurmurHash3(seed: timestamp, hashSize: 128);
-
-            int splitPages = 512 / (murmur.HashSize / 8);
-            Debug.Assert(splitPages * murmur.HashSize / 8 == 512);
-
             const uint WIDTH = 32;
             const uint HEIGHT = 16;
 
             MemoryStream stream = new MemoryStream(512);
-            foreach (byte[] page in Enumerable.Range(0, splitPages)
-                                              .Select(p => murmur.ComputeHash(p)))
-            {
-                stream.Write(page, 0, page.Length);
-            }
 
             SimplexNoise noiseGen = new SimplexNoise(stream.GetBuffer());
-
-            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen, new CircleGradiantMask());
-            testWorld.DefinePlanet(
-                radius: 6371000.0, // radius
-                gravity: 9.81, // g
-                distance_sun: 1.0, // distance from sun in AU
-                solar_luminosity: 1.0 // relative solar luminosity
-            );
-
-            testWorld.DefineSeasons(
-                SEASONAL_TILT_EARTH,
-                NORTHERN_SOLSTICE_EARTH
-            );
-
-            testWorld.DefineArea(
-                GEOCOORDINATE_UK,
-                new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
-            );
+            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen/*, mask: new CircleGradiantMask()*/)
+            {
+                SeaProportion = SEA_PROPORTION,
+                SeaLevel = SEA_LEVEL,
+                Planet = new World.PlanetConfig
+                {
+                    Radius = 6371000.0,     // in metres e.g. 6371000.0
+                    Gravity = 9.81,         // gravity at surface, in e.g. 9.81 m/s^-2
+                    DistanceFromSun = 1.0,  // in astronomical units e.g. 1.0 AU for Earth
+                    SolarLuminosity = 1.0,  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+                },
+                Area = new World.AreaConfig
+                {
+                    Center = GEOCOORDINATE_UK,
+                    Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
+                },
+                Season = new World.SeasonConfig
+                {
+                    AxialTilt = SEASONAL_TILT_EARTH,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+                    NorthernSolstice = NORTHERN_SOLSTICE_EARTH  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
+                },
+            };
 
             WindSim windSim = new WindSim();
             windSim.Init(testWorld, 4, 4, 24);
-            windSim.RunWindSim(100);
+            windSim.Run(100);
 
-            // JW - Certainly has to be a better way of handling this.  Move it to inside World?
-            // JW - See about adding a "maximum tries" value here (or infinite if left null/zero).
-            while (true)
+            int numAttempts = 100;
+            for (int i = 0; i < numAttempts ; ++i)
             {
-                testWorld.GenerateHeightmap(1.5, 0.25);
+                Console.WriteLine(i);
 
-                if (testWorld.LandmassAtTopEdge)
+                //uint timestamp = Convert.ToUInt32((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds);
+                uint timestamp = Convert.ToUInt32(DateTime.UtcNow.ToFileTimeUtc() % uint.MaxValue);
+                MurmurHash3 murmur = new MurmurHash3(seed: timestamp, hashSize: 128);
+
+                int splitPages = 512 / (murmur.HashSize / 8);
+                Debug.Assert(splitPages * murmur.HashSize / 8 == 512);
+
+                stream.Position = 0;
+                foreach (byte[] page in Enumerable.Range(0, splitPages)
+                                                  .Select(p => murmur.ComputeHash(p)))
                 {
-                    Console.WriteLine("REJECT heightmap: landmass at top edge");
-                    continue;
+                    stream.Write(page, 0, page.Length);
                 }
 
-                if (testWorld.LandmassAtBottomEdge)
-                {
-                    Console.WriteLine("REJECT heightmap: landmass at bottom edge");
-                    continue;
-                }
+                noiseGen = new SimplexNoise(stream.GetBuffer());
+                testWorld.noise = noiseGen;
 
-                if (testWorld.LandmassAtLeftEdge)
+                if (testWorld.GenerateHeightmap(
+                    energy: 1.5,
+                    turbulance: 0.25))
                 {
-                    Console.WriteLine("REJECT heightmap: landmass at left edge");
-                    continue;
+                    testWorld.RenderElevation(String.Format("test_elevation_raw_{0}.png", i), raw: true);
+                    testWorld.RenderElevation(String.Format("test_elevation_quick_{0}.png", i));
+                    testWorld.RenderSunlight(String.Format("test_sunlight_raw_{0}.png", i), raw: true);
+                    testWorld.RenderSunlight(String.Format("test_sunlight_quick_{0}.png", i));
                 }
-
-                if (testWorld.LandmassAtRightEdge)
-                {
-                    Console.WriteLine("REJECT heightmap: landmass at right edge");
-                    continue;
-                }
-
-                if (testWorld.LandMassProportion < 0.10)	// TODO user limit
-                {
-                    Console.WriteLine("REJECT heightmap: landmass proportion too low");
-                    continue;
-                }
-
-                if (testWorld.LandMassProportion > 1.00)	// TODO user limit
-                {
-                    Console.WriteLine("REJECT heightmap: landmass proportion too high");
-                    continue;
-                }
-
-                break;
             }
-
-            testWorld.RenderElevation("test_elevation_raw.png", raw: true);
-            testWorld.RenderElevation("test_elevation_quick.png");
-            testWorld.RenderSunlight("test_sunlight_raw.png", raw: true);
-            testWorld.RenderSunlight("test_sunlight_quick.png");
         }
     }
 }

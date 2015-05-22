@@ -42,30 +42,36 @@ namespace HexGenSharp
 			_nodes = new double[Area];
         }
 
-        public void ZeroFill()
-        {
-            Array.Clear(_nodes, 0, _nodes.Length);
-        }
-
-        // normalise all values between 0.0 & 1.0
+        /// <summary>
+        /// Normalise all values between 0.0 & 1.0.  
+        /// </summary>
         public void Normalise()
         {
             double min = _nodes.Min();
-            double max = _nodes.Max();
 
-            double diff = max - min;
+            double difference = _nodes.Max() - min;
 
             for (int i = 0; i < _nodes.Length; ++i)
             {
                 _nodes[i] -= min;
-                _nodes[i] /= diff;
+                _nodes[i] /= difference;
             }
         }
 
-        // normalise all values between 0.0 & 1.0 but maintaining the full range
+        /// <summary>
+        /// Normalise all values between 0.0 & 1.0, but maintaining the full range.  
+        /// </summary>
         public void NormaliseMaximum()
         {
-            double min = Math.Max(_nodes.Min(), 0);
+            for (int i = 0; i < _nodes.Length; ++i)
+            {
+                if (_nodes[i] < 0.0)
+                {
+                    _nodes[i] = 0.0;
+                }
+            }
+
+            double min = _nodes.Min();
             double max = _nodes.Max();
 
             for (int i = 0; i < _nodes.Length; ++i)
@@ -77,71 +83,45 @@ namespace HexGenSharp
             Maximum = max;
         }
 
-        public void ClampFloorTo(double min, double to)
+        /// <summary>
+        /// Clamps all values below the minimum limit to itself.  
+        /// </summary>
+        /// <param name="minimum">The minimum limit for values.</param>
+        public void ClampFloorTo(double minimum)
         {
             for (int i = 0; i < _nodes.Length; ++i)
             {
-                if (_nodes[i] < min)
+                if (_nodes[i] < minimum)
                 {
-                    _nodes[i] = to;
+                    _nodes[i] = minimum;
                 }
             }
         }
 
-        public void ClampCeilingTo(double max, double to)
+        /// <summary>
+        /// Clamps all values above the maximum limit to itself.  
+        /// </summary>
+        /// <param name="minimum">The maximum limit for values.</param>
+        public void ClampCeilingTo(double maximum)
         {
             for (int i = 0; i < _nodes.Length; ++i)
             {
-                if (_nodes[i] > max)
+                if (_nodes[i] > maximum)
                 {
-                    _nodes[i] = to;
+                    _nodes[i] = maximum;
                 }
             }
         }
 
+        /// <summary>
+        /// Multiplies each value by itself.
+        /// </summary>
         public void Square()
         {
             for (int i = 0; i < _nodes.Length; ++i)
             {
                 _nodes[i] *= _nodes[i];
             }
-        }
-
-        double Average(Rectangle rect)
-        {
-            double avg = 0;
-
-            for (int i = rect.Y * rect.Height; i < rect.Y * rect.Height + rect.Height; ++i)
-            {
-                for (int j = rect.X * rect.Width; j < rect.X * rect.Width + rect.Width; ++j)
-                {
-                    avg += _nodes[(i * _size.Width) + j];
-                }
-            }
-
-            return avg / (rect.Width * rect.Height);
-        }
-
-		// JW - Not used anywhere?
-        static void Downsample(Doubles2D dest, Doubles2D src)
-        {
-            Debug.Assert(dest._size.Width <= src._size.Width, "src_width_too_small");
-            Debug.Assert(dest._size.Height <= src._size.Height, "src_height_too_small");
-
-            int xs = src._size.Width / dest._size.Width;
-            int ys = src._size.Height / dest._size.Height;
-
-            int i = 0;
-            for (int y = 0; y < dest._size.Width; y++)
-            {
-                for (int x = 0; x < dest._size.Height; x++)
-                {
-                    dest._nodes[i++] = src.Average(new Rectangle(x, y, xs, ys));
-                }
-            }
-
-            dest.Maximum = src.Maximum;
-            dest.Minimum = src.Minimum;
         }
     }
 }

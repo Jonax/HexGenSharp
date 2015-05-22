@@ -46,7 +46,6 @@ namespace HexGenSharp
 
             /* a 3D grid of cells covering the map surface */
             cell = new Windcell[elements];
-            Debug.Assert(cell != null, "alloc_sim_cells");
 
             /* 2D buffers for sampling information from the world map at a lower
              * resolution */
@@ -71,31 +70,31 @@ namespace HexGenSharp
              * converges to realistic point as soon as possible.
              * */
             double altitude = 0;
-            double n = (double)gridHeight + 1;
+            double n = gridHeight + 1;
 
             // for each layer
-            for (uint z = 0; z < gridHeight; z++)
+            for (uint z = 0; z < gridHeight; ++z)
             {
                 // smaller depths nearer the surface for accuracy
                 // using depths of nx for 
                 // and x = 2h/((n)(n-1))
-                double x = 2.0 * this.height / (n * (n - 1));
-                double depth = x * (1.0 + (double)z);
-                altitude += depth * 0.5; // midpoint
+                double x = 2 * this.height / (n * (n - 1));
+                double depth = x * (1 + z);
+                altitude += depth / 2; // midpoint
 
                 // Find width of cell by extending a triangle from planet radius to
                 // height of layer.
                 double width = TriangleExtendedOpposite
                 (
-                    world.Radius,
-                    world.Dimension.X / Convert.ToDouble(gridLength),
+                    world.Planet.Radius,
+                    world.Area.Dimension.X / Convert.ToDouble(gridLength),
                     altitude
                 );
 
                 double height = TriangleExtendedOpposite
                 (
-                    world.Radius,
-                    world.Dimension.Y / Convert.ToDouble(gridWidth),
+                    world.Planet.Radius,
+                    world.Area.Dimension.Y / Convert.ToDouble(gridWidth),
                     altitude
                 );
 
@@ -174,13 +173,13 @@ namespace HexGenSharp
         {
             Windcell cell = AtZI(z, i);
 
-            double re = world.Radius;
+            double re = world.Planet.Radius;
             double altitude = cell.altitude;
 
             // Gravity at altitude by the inverse square law
             // JW: Used a Math.Pow here rather than the usual x*x for convenience.  
             //     Look at replacing when optimising.  
-            double gravity = world.Gravity * Math.Pow(re / (re + altitude), 2);
+            double gravity = world.Planet.Gravity * Math.Pow(re / (re + altitude), 2);
 
             // Cell weight by F=ma
             cell.weight = cell.mass * gravity;
@@ -283,7 +282,7 @@ namespace HexGenSharp
         }
 
 
-        public void RunWindSim(int iterations)
+        public void Run(int iterations)
         {
             InitCells();
 

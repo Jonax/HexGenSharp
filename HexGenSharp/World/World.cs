@@ -13,27 +13,84 @@ namespace HexGenSharp
 {
     public partial class World
     {
-		private const double SEA_PROPORTION = 0.6;
-		public const double SEA_LEVEL = 0.15;
+        public class PlanetConfig
+        {
+            public double Radius { get; set; }              // metres
+            public double Gravity { get; set; }             // m/s^2
+            public double DistanceFromSun { get; set; }     // in AU
+            public double SolarLuminosity { get; set; }     // normalised relative to our sun at 1.0. Watts.
+        }
 
-        private bool _definedSeasons;
-        private double AxialTilt { get; set; }          // degrees; earth is 23.4°
-        private double NorthernSolstice { get; set; }   // seasonal lag; point in orbit where this occurs (Earth is at 0.222)
+        public class AreaConfig
+        {
+            public GeoCoordinate Center { get; set; }       // xy center of map on sphere
+            public Vector3D Dimension { get; set; }        // surface width from top/bottom, left/right, floor/ceil
+        }
 
-        private bool _definedPlanet;
-        public double Radius { get; private set; }              // metres
-        public double Gravity { get; private set; }             // m/s^2
-        private double DistanceFromSun { get; set; }   // in AU
-        private double SolarLuminosity { get; set; }    // normalised relative to our sun at 1.0. Watts.
+        public class SeasonConfig
+        {
+            public double AxialTilt { get; set; }           // degrees; earth is 23.4°
+            public double NorthernSolstice { get; set; }    // seasonal lag; point in orbit where this occurs (Earth is at 0.222)
+        }
 
-        private bool _definedArea;
-        public GeoCoordinate Center { get; private set; }       // xy center of map on sphere
-        public Vector3D Dimension { get; private set; }        // surface width from top/bottom, left/right, floor/ceil
+        public double SeaProportion { get; set; }
+        public double SeaLevel { get; set; }
+
+        private PlanetConfig _planet;
+        public PlanetConfig Planet
+        {
+            get { return _planet; }
+            set
+            {
+                Debug.Assert(value.Radius > 0.0, "radius must be > 0");
+                Debug.Assert(value.Gravity > 0.0, "gravity must be > 0");
+                Debug.Assert(value.DistanceFromSun > 0.0, "distance from sun must be > 0");
+                Debug.Assert(value.SolarLuminosity > 0.0, "solar_luminosity must be > 0");
+
+                _planet = value;
+            }
+        }
+
+        private AreaConfig _area;
+        public AreaConfig Area
+        {
+            get { return _area; }
+            set
+            {
+                Debug.Assert(value.Center != null, "geocoordinate invalid");
+                Debug.Assert(value.Dimension.X > 0.0, "dimension.x must be > 0");
+                Debug.Assert(value.Dimension.Y > 0.0, "dimension.y must be > 0");
+                Debug.Assert(value.Dimension.Z > 0.0, "dimension.z must be > 0");
+                Debug.Assert(Planet != null, "WorldDefinePlanet first");
+
+                double circumference = 2.0 * Math.PI * Planet.Radius;
+                Debug.Assert(circumference >= value.Dimension.X, "dimension.x is too large for the planet radius");
+                Debug.Assert(circumference >= value.Dimension.Y, "dimension.y is too large for the planet radius");
+                Debug.Assert(value.Dimension.Z <= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
+
+                _area = value;
+            }
+        }
+
+        private SeasonConfig _season;
+        public SeasonConfig Season
+        {
+            get { return _season; }
+            set
+            {
+                Debug.Assert(value.AxialTilt >= -180.0, "tilt must be >= -180");
+                Debug.Assert(value.AxialTilt <= +180.0, "tilt must be <= 180");
+                Debug.Assert(value.NorthernSolstice >= -1.0, "northern solstice must be > -1.0");
+                Debug.Assert(value.NorthernSolstice <= +1.0, "northern solstice must be < 1.0");
+
+                _season = value;
+            }
+        }
 
         private Doubles2D _elevation;
         private Doubles2D _sunlight;
 
-		private SimplexNoise noise;
+		public SimplexNoise noise;
 
 		private IMask mask;
 
@@ -42,10 +99,6 @@ namespace HexGenSharp
 			Debug.Assert(size.Width > 0, "Bad size");
 			Debug.Assert(size.Height > 0, "Bad size");
 
-			_definedPlanet = false;
-			_definedSeasons = false;
-			_definedArea = false;
-
             this.noise = noise;
 
 			_elevation = new Doubles2D(size);
@@ -53,61 +106,6 @@ namespace HexGenSharp
 
 			this.mask = mask ?? new MaskBase();
 		}
-
-        public void DefinePlanet(
-            double radius,			 // in metres e.g. 6371000.0
-            double gravity,			 // gravity at surface, in e.g. 9.81 m/s^-2
-            double distance_sun,	 // in astronomical units e.g. 1.0 AU for Earth
-            double solar_luminosity) // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
-        {
-            Debug.Assert(radius > 0.0, "radius must be > 0");
-            Debug.Assert(gravity > 0.0, "gravity must be > 0");
-            Debug.Assert(distance_sun > 0.0, "distance from sun must be > 0");
-            Debug.Assert(solar_luminosity > 0.0, "solar_luminosity must be > 0");
-
-            Radius = radius;
-            Gravity = gravity;
-            DistanceFromSun = distance_sun;
-            SolarLuminosity = solar_luminosity;
-
-			_definedPlanet = true;
-        }
-
-        public void DefineSeasons(
-            double seasonal_tilt,     // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-            double northern_solstice) // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
-        {
-            Debug.Assert(seasonal_tilt >= -180.0, "tilt must be >= -180");
-            Debug.Assert(seasonal_tilt <= +180.0, "tilt must be <= 180");
-            Debug.Assert(northern_solstice >= -1.0, "northern solstice must be > -1.0");
-            Debug.Assert(northern_solstice <= +1.0, "northern solstice must be < 1.0");
-
-            AxialTilt = seasonal_tilt;
-            NorthernSolstice = northern_solstice;
-
-            _definedSeasons = true;
-        }
-
-        public void DefineArea(
-            GeoCoordinate center,   // xy center of map on sphere
-            Vector3D dimension)     // surface width from top/bottom, left/right, floor/ceil
-        {
-            Debug.Assert(center != null, "geocoordinate invalid");
-            Debug.Assert(dimension.X > 0.0, "dimension.x must be > 0");
-            Debug.Assert(dimension.Y > 0.0, "dimension.y must be > 0");
-            Debug.Assert(dimension.Z > 0.0, "dimension.z must be > 0");
-            Debug.Assert(_definedPlanet, "WorldDefinePlanet first");
-
-            double circumference = 2.0 * Math.PI * Radius;
-            Debug.Assert(circumference >= dimension.X, "dimension.x is too large for the planet radius");
-            Debug.Assert(circumference >= dimension.Y, "dimension.y is too large for the planet radius");
-            Debug.Assert(dimension.Z <= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
-
-            Center = center;
-            Dimension = dimension;
-
-			_definedArea = true;
-        }
 
 		public void ApplyNoise(
 			double energy,			// 0.6 to 3.0.  Higher == more islands
@@ -163,8 +161,8 @@ namespace HexGenSharp
 			/* Octaves of noise */
 			for (uint i = 1; i < iterations; ++i)
 			{
-				scale *= 2.0;   // double the scale for each octave
-				scale_r *= 0.5; // this halves the reciprocal
+				scale *= 2;   // double the scale for each octave
+				scale_r /= 2; // this halves the reciprocal
     
 				for (uint j = 0; j < _elevation.Area; ++j)
 				{
@@ -180,7 +178,7 @@ namespace HexGenSharp
 			}
 		}
 
-		public void GenerateHeightmap(
+		private void RollHeightmapCandidate(
 			double energy,			// 0.6 to 3.0.  Higher == more islands
 			double turbulance)		// -0.5 to 1.0. Controls shape and contrast
 		{
@@ -188,7 +186,8 @@ namespace HexGenSharp
 
 			/* Seed the state used by the noise function */
 			// JW: Placeholder for now.  Properly seed it later.  
-			noise.Perm = new byte[512];
+            //noise.Perm = new byte[512];
+            string test = String.Join("", noise.Perm.Select(p => String.Format("{0:X}", p)));
 
 			/* Apply several octaves of noise at a specific scale */
 			ApplyNoise(energy, turbulance);
@@ -196,14 +195,67 @@ namespace HexGenSharp
 			/* Normalise elevation between 0.0 to 1.0 */
 			_elevation.Normalise();
 
-			/* Create a sea floor by clamping anything below 0.6 */
-			_elevation.ClampFloorTo(SEA_PROPORTION, SEA_PROPORTION);
+            /* Create a sea floor by clamping anything below 0.6 */
+            // JW - Only do if set to a reasonable value (i.e. 0 is not valid)
+            if (SeaProportion > 0)
+            {
+                _elevation.ClampFloorTo(SeaProportion);
+            }
 
 			/* Normalise elevation again between 0.0 to 1.0 */
 			_elevation.Normalise();
 		}
 
-		public bool LandmassAtTopEdge
+        public bool GenerateHeightmap(
+            double energy,			// 0.6 to 3.0.  Higher == more islands
+            double turbulance)      // -0.5 to 1.0. Controls shape and contrast
+        {
+            // JW - Certainly has to be a better way of handling this.  Move it to inside World?
+            // JW - See about adding a "maximum tries" value here (or infinite if left null/zero).
+            RollHeightmapCandidate(1.5, 0.25);
+
+            /*
+            if (LandmassAtTopEdge)
+            {
+                Console.WriteLine("REJECT heightmap: landmass at top edge");
+                return false;
+            }
+
+            if (LandmassAtBottomEdge)
+            {
+                Console.WriteLine("REJECT heightmap: landmass at bottom edge");
+                return false;
+            }
+
+            if (LandmassAtLeftEdge)
+            {
+                Console.WriteLine("REJECT heightmap: landmass at left edge");
+                return false;
+            }
+
+            if (LandmassAtRightEdge)
+            {
+                Console.WriteLine("REJECT heightmap: landmass at right edge");
+                return false;
+            }
+
+            if (LandMassProportion < 0.10)	// TODO user limit
+            {
+                Console.WriteLine("REJECT heightmap: landmass proportion too low");
+                return false;
+            }
+
+            if (LandMassProportion > 1.00)	// TODO user limit
+            {
+                Console.WriteLine("REJECT heightmap: landmass proportion too high");
+                return false;
+            }
+            */
+
+            return true;
+        }
+
+        private bool LandmassAtTopEdge
 		{
 			get
 			{
@@ -211,11 +263,11 @@ namespace HexGenSharp
 				// inside Doubles2D (possibly as generators).  
 				// JW: Checks the very top row, seeing if any are above sea level.  
 				return _elevation.Nodes.Take(Convert.ToInt32(_elevation.Width))
-									  .Any(v => v >= SEA_LEVEL);
+									   .Any(v => v >= SeaLevel);
 			}
 		}
 
-		public bool LandmassAtBottomEdge
+        private bool LandmassAtBottomEdge
 		{
 			get
             {
@@ -223,18 +275,18 @@ namespace HexGenSharp
 				// the iterator only (i.e. shouldn't cause the array itself to be
 				// reversed.  
 				return _elevation.Nodes.Reverse()
-									  .Take((int)_elevation.Width)
-									  .Any(v => v >= SEA_LEVEL);
+								   	   .Take((int)_elevation.Width)
+                                       .Any(v => v >= SeaLevel);
 			}
 		}
 
-		public bool LandmassAtLeftEdge
+        private bool LandmassAtLeftEdge
 		{
 			get
 			{
 				for (uint i = 0; i < _elevation.Area; i += _elevation.Width)
 				{
-					if (_elevation.Nodes[i] >= SEA_LEVEL)
+                    if (_elevation.Nodes[i] >= SeaLevel)
 					{
 						return true;
 					}
@@ -244,13 +296,13 @@ namespace HexGenSharp
 			}
 		}
 
-		public bool LandmassAtRightEdge
+        private bool LandmassAtRightEdge
 		{
 			get
 			{
 				for (uint i = _elevation.Width - 1; i < _elevation.Area; i += _elevation.Width)
 				{
-					if (_elevation.Nodes[i] >= SEA_LEVEL)
+                    if (_elevation.Nodes[i] >= SeaLevel)
 					{
 						return true;
 					}
@@ -260,11 +312,11 @@ namespace HexGenSharp
 			}
 		}
 
-		public double LandMassProportion
+        private double LandMassProportion
 		{
 			get
 			{
-				return Convert.ToDouble(_elevation.Nodes.Count(v => v >= SEA_LEVEL)) / _elevation.Area;
+                return Convert.ToDouble(_elevation.Nodes.Count(v => v >= SeaLevel)) / _elevation.Area;
 			}
 		}
 
@@ -272,9 +324,9 @@ namespace HexGenSharp
 		{
 			Debug.Assert(orbit >= 0.0, "orbit must be >= 0.0");
 			Debug.Assert(orbit <= 1.0, "orbit must be >= 1.0");
-			Debug.Assert(_definedPlanet, "WorldDefinePlanet first");
-			Debug.Assert(_definedSeasons, "WorldDefineSeasons first");
-			Debug.Assert(_definedArea, "WorldDefineArea first");
+			Debug.Assert(Planet != null, "WorldDefinePlanet first");
+			Debug.Assert(Season != null, "WorldDefineSeasons first");
+			Debug.Assert(Area != null, "WorldDefineArea first");
 
 			// JW: This is essentially a wrapper function, right?  Check to see if there's anything missed
 			// out.  If not, bite the bullet and merge these two functions together.  
@@ -282,13 +334,13 @@ namespace HexGenSharp
 			(
 				ref _sunlight,
 				orbit,
-				NorthernSolstice,
-				AxialTilt,
-				Radius,
-				DistanceFromSun,
-				SolarLuminosity,
-				Center,
-				Dimension.Y
+				Season.NorthernSolstice,
+                Season.AxialTilt,
+                Planet.Radius,
+                Planet.DistanceFromSun,
+                Planet.SolarLuminosity,
+				Area.Center,
+                Area.Dimension.Y
 			);
 		}
 
