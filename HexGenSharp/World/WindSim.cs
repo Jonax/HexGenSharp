@@ -87,14 +87,14 @@ namespace HexGenSharp
                 double width = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.X / Convert.ToDouble(gridLength),
+                    world.Area.Dimension.X / gridLength,
                     altitude
                 );
 
                 double height = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.Y / Convert.ToDouble(gridWidth),
+                    world.Area.Dimension.Y / gridWidth,
                     altitude
                 );
 

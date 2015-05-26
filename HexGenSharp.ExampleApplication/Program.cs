@@ -36,60 +36,48 @@ namespace HexGenSharp.ExampleApplication
         // Sample run
         static void Main(string[] args)
         {
-            const uint WIDTH = 32;
-            const uint HEIGHT = 16;
+            byte[] data = new byte[512];
 
-            MemoryStream stream = new MemoryStream(512);
+            int timestamp = Convert.ToInt32(DateTime.UtcNow.ToFileTimeUtc() % uint.MaxValue);
+            Random rng = new Random(timestamp);
 
-            SimplexNoise noiseGen = new SimplexNoise(stream.GetBuffer());
-            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen/*, mask: new CircleGradiantMask()*/)
-            {
-                SeaProportion = SEA_PROPORTION,
-                SeaLevel = SEA_LEVEL,
-                Planet = new World.PlanetConfig
-                {
-                    Radius = 6371000.0,     // in metres e.g. 6371000.0
-                    Gravity = 9.81,         // gravity at surface, in e.g. 9.81 m/s^-2
-                    DistanceFromSun = 1.0,  // in astronomical units e.g. 1.0 AU for Earth
-                    SolarLuminosity = 1.0,  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
-                },
-                Area = new World.AreaConfig
-                {
-                    Center = GEOCOORDINATE_UK,
-                    Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
-                },
-                Season = new World.SeasonConfig
-                {
-                    AxialTilt = SEASONAL_TILT_EARTH,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-                    NorthernSolstice = NORTHERN_SOLSTICE_EARTH  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
-                },
-            };
-
-            WindSim windSim = new WindSim();
-            windSim.Init(testWorld, 4, 4, 24);
-            windSim.Run(100);
+            MurmurHash3 murmur = new MurmurHash3(seed: Convert.ToUInt32(timestamp), hashSize: 128);
 
             int numAttempts = 100;
-            for (int i = 0; i < numAttempts ; ++i)
+            for (int i = 0; i < numAttempts; ++i)
             {
                 Console.WriteLine(i);
 
-                //uint timestamp = Convert.ToUInt32((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds);
-                uint timestamp = Convert.ToUInt32(DateTime.UtcNow.ToFileTimeUtc() % uint.MaxValue);
-                MurmurHash3 murmur = new MurmurHash3(seed: timestamp, hashSize: 128);
+                rng.NextBytes(data);
 
-                int splitPages = 512 / (murmur.HashSize / 8);
-                Debug.Assert(splitPages * murmur.HashSize / 8 == 512);
+                data = murmur.ComputeHash(data);
 
-                stream.Position = 0;
-                foreach (byte[] page in Enumerable.Range(0, splitPages)
-                                                  .Select(p => murmur.ComputeHash(p)))
+                World testWorld = new World(new System.Drawing.Size(512, 512), new SimplexNoise(data)/*, mask: new CircleGradiantMask()*/)
                 {
-                    stream.Write(page, 0, page.Length);
-                }
+                    SeaProportion = SEA_PROPORTION,
+                    SeaLevel = SEA_LEVEL,
+                    Planet = new World.PlanetConfig
+                    {
+                        Radius = 6371000.0,     // in metres e.g. 6371000.0
+                        Gravity = 9.81,         // gravity at surface, in e.g. 9.81 m/s^-2
+                        DistanceFromSun = 1.0,  // in astronomical units e.g. 1.0 AU for Earth
+                        SolarLuminosity = 1.0,  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+                    },
+                    Area = new World.AreaConfig
+                    {
+                        Center = GEOCOORDINATE_UK,
+                        Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
+                    },
+                    Season = new World.SeasonConfig
+                    {
+                        AxialTilt = SEASONAL_TILT_EARTH,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+                        NorthernSolstice = NORTHERN_SOLSTICE_EARTH  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
+                    },
+                };
 
-                noiseGen = new SimplexNoise(stream.GetBuffer());
-                testWorld.noise = noiseGen;
+                WindSim windSim = new WindSim();
+                windSim.Init(testWorld, 4, 4, 24);
+                windSim.Run(100);
 
                 if (testWorld.GenerateHeightmap(
                     energy: 1.5,
