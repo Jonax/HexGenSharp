@@ -407,7 +407,7 @@ namespace HexGenSharp
 
 			buffer.NormaliseMaximum();
 
-			Console.WriteLine("Orbit {0:0}/1.0 radiance(W / m ^ 2): low={1:00} high={2:00} (incident={3:00})", 
+			Console.WriteLine("Orbit {0:0.00}/1.0 radiance(W / m ^ 2): low={1:0.00} high={2:0.00} (incident={3:0.00})", 
 				day, buffer.Minimum, buffer.Maximum, incident_radiance);
 		}
 	}

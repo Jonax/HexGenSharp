@@ -286,11 +286,6 @@ namespace HexGenSharp
         {
             InitCells();
 
-            //iterations = 2501;
-            //iterations = 3;
-            //iterations = 50;
-            iterations = 10001;
-
             Console.WriteLine("Wind simulation: {0} iterations over {1}x{2}x{3} cells", iterations, gridLength, gridWidth, gridHeight);
 
             for (int iteration = 0; iteration < iterations; ++iteration)
