@@ -204,3 +204,8 @@ FakesAssemblies/
 
 # Visual Studio 6 workspace options file
 *.opt
+
+# JW - Additional unnecessary files
+.chk
+.jrs
+.ide

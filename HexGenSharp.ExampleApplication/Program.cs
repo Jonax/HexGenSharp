@@ -14,42 +14,21 @@ namespace HexGenSharp.ExampleApplication
 {
     class Program
     {
-        private const double SEA_PROPORTION = 0.55;
-        public const double SEA_LEVEL = 0.15;
-
         private const double NORTHERN_SOLSTICE_EARTH = 0.222;
         private const double SEASONAL_TILT_EARTH = 23.5;
-
-        /* Some "representative" geocoordinates based on major cities */
-        private static readonly GeoCoordinate GEOCOORDINATE_UK = new GeoCoordinate(51.50021, -0.115958);
-        private static readonly GeoCoordinate GEOCOORDINATE_RUSSIA = new GeoCoordinate(55.75, 37.616667);
-        private static readonly GeoCoordinate GEOCOORDINATE_USA = new GeoCoordinate(38.895111, -77.036667);
-        private static readonly GeoCoordinate GEOCOORDINATE_AUSTRALIA = new GeoCoordinate(-35.308, 149.1245);
-        private static readonly GeoCoordinate GEOCOORDINATE_BRAZIL = new GeoCoordinate(-15.783333, -47.866667);
-        private static readonly GeoCoordinate GEOCOORDINATE_SOUTH_AFRICA = new GeoCoordinate(-26.204444, 28.045556);
-        private static readonly GeoCoordinate GEOCOORDINATE_CHINA = new GeoCoordinate(39.916667, 116.383333);
-        private static readonly GeoCoordinate GEOCOORDINATE_GREECE = new GeoCoordinate(37.966667, 23.716667);
-        private static readonly GeoCoordinate GEOCOORDINATE_ITALY = new GeoCoordinate(41.9, 12.483333);
-        private static readonly GeoCoordinate GEOCOORDINATE_ICELAND = new GeoCoordinate(64.133333, -21.933333);
-        private static readonly GeoCoordinate GEOCOORDINATE_EGYPT = new GeoCoordinate(30.033333, 31.216667);
-        private static readonly GeoCoordinate GEOCOORDINATE_KAZAKHSTAN = new GeoCoordinate(51.166667, 71.416667);
-        private static readonly GeoCoordinate GEOCOORDINATE_INDIA = new GeoCoordinate(28.613333, 77.208333);
 
         // Sample run
         static void Main(string[] args)
         {
-            JObject test = JsonConvert.DeserializeObject<JObject>(File.ReadAllText("config.json"));
+            JObject config = JObject.Parse(File.ReadAllText("config.json"));
 
-            /*
-            Dictionary<string, GeoCoordinate> availableLocations = new Dictionary<string,GeoCoordinate>();
-            foreach (JProperty locationData in test["available_locations"])
-            {
-                double[] coords = locationData.Children().SelectMany(v => Convert.ToDouble(v)).ToArray();
-
-                availableLocations.Add(locationData.Name, new GeoCoordinate(coords[0], coords[1]));
-            }
-            */
-
+            Dictionary<string, GeoCoordinate> availableLocations = config["available_locations"].ToDictionary(kv => (kv as JProperty).Name,
+                                                                                                            kv =>
+                                                                                                            {
+                                                                                                                double[] coords = ((kv as JProperty).Value as JArray).Select(v => Convert.ToDouble(v)).ToArray();
+                                                                                                                
+                                                                                                                return new GeoCoordinate(coords[0], coords[1]);
+                                                                                                            });
 
             byte[] data = new byte[512];
 
@@ -61,8 +40,8 @@ namespace HexGenSharp.ExampleApplication
 
             World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen, mask: new CircleGradiantMask())
             {
-                SeaProportion = SEA_PROPORTION,
-                SeaLevel = SEA_LEVEL,
+                SeaProportion = config["sea_propertion"].Value<double>(),
+                SeaLevel = config["sea_level"].Value<double>(),
                 Planet = new World.PlanetConfig
                 {
                     Radius = 6371000.0,     // in metres e.g. 6371000.0
@@ -72,7 +51,7 @@ namespace HexGenSharp.ExampleApplication
                 },
                 Area = new World.AreaConfig
                 {
-                    Center = GEOCOORDINATE_UK,
+                    Center = availableLocations["UK"],
                     Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
                 },
                 Season = new World.SeasonConfig
@@ -82,7 +61,7 @@ namespace HexGenSharp.ExampleApplication
                 },
             };
 
-            int numAttempts = 100;
+            int numAttempts = config["default_iterations"].Value<int>();
             for (int i = 0; i < numAttempts; ++i)
             {
                 Console.WriteLine(i);

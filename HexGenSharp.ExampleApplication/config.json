@@ -15,4 +15,9 @@
         "UK":			[ 51.50021,   -0.115958],
         "USA":			[ 38.895111, -77.036667]
 	}
+
+	"sea_proportion": "0.55",
+	"sea_level": "0.15",
+
+	"default_iterations": 100
 }
