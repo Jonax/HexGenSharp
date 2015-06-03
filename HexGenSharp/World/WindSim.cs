@@ -28,7 +28,7 @@ namespace HexGenSharp
 		private Doubles2D sunlight;	 // resampled to a smaller resolution
 		private Doubles2D albedo;	 // resampled to a smaller resolution
 
-        public void Init(World w, uint length, uint width, uint height)
+        public WindSim(World w, uint length, uint width, uint height)
         {
             Debug.Assert(w != null, "NULL world pointer");
             Debug.Assert(length > 0, "size.X must be > 0");
@@ -290,9 +290,9 @@ namespace HexGenSharp
 
             for (int iteration = 0; iteration < iterations; ++iteration)
             {
-                if (iteration % 100 == 0)
+                if (iteration + 1 % 100 == 0)
                 {
-                    Console.WriteLine("Windsim: {0}/{1}", iteration, iterations - 1);
+                    Console.WriteLine("Windsim: {0}/{1}", iteration, iterations);
                 }
 
                 for (uint i = 0; i < gridLength * gridWidth; ++i)

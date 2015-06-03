@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 using ImageMagick;
@@ -15,7 +16,7 @@ namespace HexGenSharp
             MASK_COLOUR = new MagickColor(255, 0, 255);
         }
 
-        public void RenderElevation(string path, bool raw = false)
+        public void RenderElevation(string path, bool raw = false, int renderWidth = 0)
         {
             IEnumerable<byte> pixels;
             if (raw)
@@ -49,11 +50,18 @@ namespace HexGenSharp
 
                 image.Format = MagickFormat.Png32;
 
+                if (renderWidth > 0)
+                {
+                    int newHeight = Convert.ToInt32(Convert.ToDouble(image.Height) / image.Width * renderWidth);
+
+                    image.Resize(renderWidth, newHeight);
+                }
+
                 image.Write(path);
             }
         }
 
-        public void RenderSunlight(string path, bool raw = false)
+        public void RenderSunlight(string path, bool raw = false, int renderWidth = 0)
         {
             IEnumerable<byte> pixels;
             if (raw)
@@ -83,6 +91,13 @@ namespace HexGenSharp
                 image.GetWritablePixels().Set(pixels.ToArray());
 
                 image.Format = MagickFormat.Png32;
+
+                if (renderWidth > 0)
+                {
+                    int newHeight = Convert.ToInt32(Convert.ToDouble(image.Height) / image.Width * renderWidth);
+
+                    image.Resize(renderWidth, newHeight);
+                }
 
                 image.Write(path);
             }

@@ -9,6 +9,7 @@ using HexGenSharp;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Drawing;
 
 namespace HexGenSharp.ExampleApplication
 {
@@ -20,6 +21,7 @@ namespace HexGenSharp.ExampleApplication
         // Sample run
         static void Main(string[] args)
         {
+            /*
             JObject config = JObject.Parse(File.ReadAllText("config.json"));
 
             Dictionary<string, GeoCoordinate> availableLocations = config["available_locations"].ToDictionary(kv => (kv as JProperty).Name,
@@ -29,6 +31,7 @@ namespace HexGenSharp.ExampleApplication
                                                                                                                 
                                                                                                                 return new GeoCoordinate(coords[0], coords[1]);
                                                                                                             });
+            */
 
             byte[] data = new byte[512];
 
@@ -40,8 +43,8 @@ namespace HexGenSharp.ExampleApplication
 
             World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen, mask: new CircleGradiantMask())
             {
-                SeaProportion = config["sea_propertion"].Value<double>(),
-                SeaLevel = config["sea_level"].Value<double>(),
+                SeaProportion = 0.55,
+                SeaLevel = 0.15,
                 Planet = new World.PlanetConfig
                 {
                     Radius = 6371000.0,     // in metres e.g. 6371000.0
@@ -51,7 +54,7 @@ namespace HexGenSharp.ExampleApplication
                 },
                 Area = new World.AreaConfig
                 {
-                    Center = availableLocations["UK"],
+                    Center = new GeoCoordinate(51.50021, -0.115958),
                     Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
                 },
                 Season = new World.SeasonConfig
@@ -61,7 +64,7 @@ namespace HexGenSharp.ExampleApplication
                 },
             };
 
-            int numAttempts = config["default_iterations"].Value<int>();
+            int numAttempts = 5;
             for (int i = 0; i < numAttempts; ++i)
             {
                 Console.WriteLine(i);
