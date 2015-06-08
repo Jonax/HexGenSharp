@@ -1,10 +1,10 @@
-﻿using MathNet.Spatial.Euclidean;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HexGenSharp
 {
@@ -15,13 +15,14 @@ namespace HexGenSharp
         double temperature;
         double moisture;
         public double altitude;
-        public Vector3D dimension; // of any cell
-        public Vector3D velocity;
+        public DenseVector dimensionX;
+        public DenseVector dimension; // of any cell
+        public DenseVector velocity;
 
         // Derived
         double volume;
         public double weight;
-        public Vector3D dimension_reciprocal;
+        public DenseVector dimension_reciprocal;
 
         // Forces due to pressure
         public double force_up;
@@ -32,32 +33,29 @@ namespace HexGenSharp
             double mass,         // kg
             double temperature,  // K
             double moisture,     // kg
-            Vector3D dimension)  // m*m*m
+            Vector dimension)  // m*m*m
         {
             Debug.Assert(altitude >= 0, "altitude must be positive");
             Debug.Assert(mass >= 0, "mass must be positive");
             Debug.Assert(temperature >= 0, "temperature must be positive (Kelvin)");
             Debug.Assert(moisture >= 0, "moisture must be positive");
 
-            Debug.Assert(dimension.X >= 0, "dimension.x must be positive");
-            Debug.Assert(dimension.Y >= 0, "dimension.y must be positive");
-            Debug.Assert(dimension.Z >= 0, "dimension.z must be positive");
+            Debug.Assert(dimension.At(0) >= 0, "dimension.x must be positive");
+            Debug.Assert(dimension.At(1) >= 0, "dimension.y must be positive");
+            Debug.Assert(dimension.At(2) >= 0, "dimension.z must be positive");
 
             this.altitude = altitude;
             this.mass = mass;
             this.temperature = temperature;
             this.moisture = moisture;
-            this.dimension = dimension;
+            this.dimension = dimension as DenseVector;
 
-            this.volume = this.dimension.X * this.dimension.Y * this.dimension.Z;
+            this.volume = this.dimension[0] * this.dimension[1] * this.dimension[2];
 
-            this.velocity = new Vector3D(0.0, 0.0, 0.0);
+            this.velocity = DenseVector.Create(3, 0.0);
 
             // JW - Why is there no straight V3D/V3D divisor?
-            this.dimension_reciprocal = new Vector3D(
-                1.0 / this.dimension.X,
-                1.0 / this.dimension.Y,
-                1.0 / this.dimension.Z);
+            this.dimension_reciprocal = (DenseVector.Create(3, 1.0) / this.dimension) as DenseVector;
         }
 
         public double Density
@@ -76,10 +74,17 @@ namespace HexGenSharp
             }
         }
 
-        public void ChangeMass(double amount)
+        public double Mass
         {
-            mass += amount;
-            Debug.Assert(mass >= 0);
+            get { return mass; }
+            set
+            {
+                if (mass != value)
+                {
+                    mass = value;
+                    Debug.Assert(mass >= 0);
+                }
+            }
         }
     };
 }

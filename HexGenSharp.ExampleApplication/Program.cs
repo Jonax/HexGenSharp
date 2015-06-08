@@ -1,4 +1,4 @@
-﻿using MathNet.Spatial.Euclidean;
+﻿using MathNet.Numerics.LinearAlgebra.Double;
 using System;
 using System.Data.HashFunction;
 using System.Device.Location;
@@ -21,7 +21,6 @@ namespace HexGenSharp.ExampleApplication
         // Sample run
         static void Main(string[] args)
         {
-            /*
             JObject config = JObject.Parse(File.ReadAllText("config.json"));
 
             Dictionary<string, GeoCoordinate> availableLocations = config["available_locations"].ToDictionary(kv => (kv as JProperty).Name,
@@ -31,7 +30,6 @@ namespace HexGenSharp.ExampleApplication
                                                                                                                 
                                                                                                                 return new GeoCoordinate(coords[0], coords[1]);
                                                                                                             });
-            */
 
             byte[] data = new byte[512];
 
@@ -41,26 +39,28 @@ namespace HexGenSharp.ExampleApplication
             //MurmurHash3 murmur = new MurmurHash3(seed: timestamp, hashSize: 128);
             SimplexNoise noiseGen = new SimplexNoise(data);
 
-            World testWorld = new World(new System.Drawing.Size(512, 512), noiseGen, mask: new CircleGradiantMask())
+            World testWorld = new World(new Size(4800, 2700), noiseGen, mask: new MaskBase())
             {
-                SeaProportion = 0.55,
-                SeaLevel = 0.15,
+                SeaProportion = config.Value<double>("sea_proportion"),
+                SeaLevel = config.Value<double>("sea_level"),
                 Planet = new World.PlanetConfig
                 {
-                    Radius = 6371000.0,     // in metres e.g. 6371000.0
-                    Gravity = 9.81,         // gravity at surface, in e.g. 9.81 m/s^-2
-                    DistanceFromSun = 1.0,  // in astronomical units e.g. 1.0 AU for Earth
-                    SolarLuminosity = 1.0,  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+                    Radius = Convert.ToDouble(config["planet"]["radius"]),     // in metres e.g. 6371000.0
+                    Gravity = Convert.ToDouble(config["planet"]["gravity"]),   // gravity at surface, in e.g. 9.81 m/s^-2
+                    DistanceFromSun = Convert.ToDouble(config["planet"]["distance_from_sun"]),  // in astronomical units e.g. 1.0 AU for Earth
+                    SolarLuminosity = Convert.ToDouble(config["planet"]["solar_luminosity"])  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
                 },
                 Area = new World.AreaConfig
                 {
-                    Center = new GeoCoordinate(51.50021, -0.115958),
-                    Dimension = new Vector3D(1000 * 1000.0, 1000 * 1000.0, 1350.0) // UK island size
+                    Center = availableLocations["UK"],
+                    Dimension = new DenseVector(config["area"]["dimension"].Children()
+                                                                           .Select(jt => Convert.ToDouble(jt))
+                                                                           .ToArray())
                 },
                 Season = new World.SeasonConfig
                 {
-                    AxialTilt = SEASONAL_TILT_EARTH,    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-                    NorthernSolstice = NORTHERN_SOLSTICE_EARTH  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
+                    AxialTilt = Convert.ToDouble(config["season"]["seasonal_tile_earth"]),    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+                    NorthernSolstice = Convert.ToDouble(config["season"]["northern_solstice_earth"])  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
                 },
             };
 
@@ -73,8 +73,7 @@ namespace HexGenSharp.ExampleApplication
 
                 //data = murmur.ComputeHash(data);
 
-                WindSim windSim = new WindSim();
-                windSim.Init(testWorld, 4, 4, 24);
+                WindSim windSim = new WindSim(testWorld, 4, 4, 24);
                 windSim.Run(100);
 
                 if (!Directory.Exists("results"))
@@ -86,15 +85,15 @@ namespace HexGenSharp.ExampleApplication
                     energy: 1.5,
                     turbulance: 0.25))
                 {
-                    testWorld.RenderElevation(String.Format("results/test_elevation_raw_{0}.png", i), raw: true);
-                    testWorld.RenderElevation(String.Format("results/test_elevation_quick_{0}.png", i));
+                    //testWorld.RenderElevation(String.Format("results/test_{0}_elevation_raw.png", i), raw: true);
+                    testWorld.RenderElevation(String.Format("results/test_{0}_elevation.png", i), renderWidth: 1920);
 
                     for (int month = 0; month < 12; ++month)
                     {
                         testWorld.WorldCalculateDirectSolarRadiation(Convert.ToDouble(month) / 12);
 
-                        testWorld.RenderSunlight(String.Format("results/test_sunlight_raw_{0}-{1}.png", i, month), raw: true);
-                        testWorld.RenderSunlight(String.Format("results/test_sunlight_quick_{0}-{1}.png", i, month));
+                        //testWorld.RenderSunlight(String.Format("results/test_{0}_sunlight_raw-{1}.png", i, month), raw: true);
+                        testWorld.RenderSunlight(String.Format("results/test_{0}_sunlight-{1}.png", i, month), renderWidth: 1920);
                     }
                 }
             }

@@ -1,11 +1,11 @@
-﻿using MathNet.Spatial.Euclidean;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HexGenSharp
 {
@@ -87,14 +87,14 @@ namespace HexGenSharp
                 double width = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.X / gridLength,
+                    world.Area.Dimension.At(0) / gridLength,
                     altitude
                 );
 
                 double height = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.Y / gridWidth,
+                    world.Area.Dimension.At(1) / gridWidth,
                     altitude
                 );
 
@@ -111,7 +111,7 @@ namespace HexGenSharp
                         0.15 * width * height * depth, // air mass kg
                         273.15, // temperature in Kelvin (0 C)
                         0.0, // moisture kg
-                        new Vector3D(width, height, depth) // m*m*m
+                        new DenseVector(new[] { width, height, depth }) // m*m*m
                     );
                 }
 
@@ -186,7 +186,7 @@ namespace HexGenSharp
 
             // Pressure by surface area
             double pressure = cell.Pressure;
-            double area_force_z = pressure * (cell.dimension.X * cell.dimension.Y);
+            double area_force_z = pressure * (cell.dimension[0] * cell.dimension[1]);
             cell.force_up = area_force_z;
             cell.force_down = area_force_z + cell.weight;
         }
@@ -202,11 +202,7 @@ namespace HexGenSharp
                 Windcell floorcell = AtZI(z, i);
                 // JW: Annoying that Vector3D attributes are read-only.  Move to an 
                 // alternative with read-write?
-                floorcell.velocity = new Vector3D(
-                    floorcell.velocity.X,
-                    floorcell.velocity.Y,
-                    Math.Max(floorcell.velocity.Z, 0.0)
-                );
+                floorcell.velocity.At(2, Math.Max(floorcell.velocity.At(2), 0.0));
 
                 // steps are evaluated from in order from z to z-1.
                 // shere z=0, there is no z-1.
@@ -237,15 +233,15 @@ namespace HexGenSharp
             
             // JW: Annoying that Vector3D attributes are read-only.  Move to an 
             // alternative with read-write?
-            from.velocity = from.velocity + new Vector3D(0.0, 0.0, force / from.mass);
-            to.velocity = to.velocity + new Vector3D(0.0, 0.0, force / to.mass);
+            from.velocity.At(2, from.velocity.At(2) + (force / from.mass));
+            to.velocity.At(2, to.velocity.At(2) + (force / to.mass));
         }
 
         void StepMass(uint z, uint i)
         {
             // Transfer of mass and momentum due to velocity
             Windcell from = AtZI(z, i);
-            double transfer = from.mass * from.velocity.Z * from.dimension_reciprocal.Z;
+            double transfer = from.mass * from.velocity[2] * from.dimension_reciprocal[2];
 
             if (transfer > 0.0 && z == 0)
                 return;
@@ -269,16 +265,16 @@ namespace HexGenSharp
             // when transferring mass, it is travelling at a velocity
             // so we want to transfer momentum to a cell
             // p = mv
-            double momentum1 = Math.Abs(transfer) * from.velocity.Z;
-            double momentum2 = to.mass * to.velocity.Z;
-            to.velocity = to.velocity + new Vector3D(0.0, 0.0, (momentum1 + momentum2) / to.mass);
+            double momentum1 = Math.Abs(transfer) * from.velocity.At(2);
+            double momentum2 = to.mass * to.velocity.At(2);
+            to.velocity.At(2, to.velocity.At(2) + ((momentum1 + momentum2) / to.mass));
 
             // and an equal force in the opposite direction accordingly
-            momentum2 = from.mass * from.velocity.Z;
-            from.velocity = from.velocity - new Vector3D(0.0, 0.0, (momentum1 + momentum2) / from.mass);
+            momentum2 = from.mass * from.velocity.At(2);
+            from.velocity.At(2, from.velocity.At(2) - ((momentum1 + momentum2) / from.mass));
 
-            from.ChangeMass(-Math.Abs(transfer));
-            to.ChangeMass(Math.Abs(transfer));
+            from.mass -= Math.Abs(transfer);
+            to.mass += Math.Abs(transfer);
         }
 
 
