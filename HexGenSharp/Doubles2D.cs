@@ -1,45 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HexGenSharp
 {
 	public class Doubles2D
 	{
-		private double[] _nodes;
+		private Matrix _nodes;
 		private Size _size;
 
 		public double[] Nodes
 		{
-			get { return _nodes; }
+			get { return _nodes.Enumerate().ToArray(); }
 		}
 
 		// JW - Are these used outside of the Doubles2D class?
 		public double Minimum { get; private set; }
 		public double Maximum { get; private set; }
 
-		public uint Width
-		{
-			get { return (uint)_size.Width; }
-		}
-
-		public uint Height
-		{
-			get { return (uint)_size.Height; }
-		}
+		public uint Width { get; private set; }
+        public uint Height { get; private set; }
 
 		public uint Area
 		{
-			get { return (uint)(_size.Width * _size.Height); }
+			get { return Width * Height; }
 		}
 
-        public Doubles2D(Size s)
+        public Doubles2D(uint width, uint height)
         {
-            _size = s;
+            Width = width;
+            Height = height;
 
-			// JW: Will this definitely work if the property is grabbed from within the constructor?
-			_nodes = new double[Area];
+            // JW: Will this definitely work if the property is grabbed from within the constructor?
+            _nodes = Matrix.Build.Dense((int)width, (int)height, 0.0) as Matrix;
         }
 
         /// <summary>
@@ -47,15 +43,12 @@ namespace HexGenSharp
         /// </summary>
         public void Normalise()
         {
-            double min = _nodes.Min();
+            IEnumerable<double> values = _nodes.Enumerate();
 
-            double difference = _nodes.Max() - min;
+            double min = values.Min();
+            double difference = values.Max() - min;
 
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                _nodes[i] -= min;
-                _nodes[i] /= difference;
-            }
+            _nodes.MapInplace(v => (difference == 0) ? 0 : (v - min) / difference);
         }
 
         /// <summary>
@@ -63,24 +56,13 @@ namespace HexGenSharp
         /// </summary>
         public void NormaliseMaximum()
         {
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                if (_nodes[i] < 0.0)
-                {
-                    _nodes[i] = 0.0;
-                }
-            }
+            _nodes.CoerceZero(v => v < 0.0);
 
-            double min = _nodes.Min();
-            double max = _nodes.Max();
+            IEnumerable<double> values = _nodes.Enumerate();
+            Minimum = values.Min();
+            Maximum = values.Max();
 
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                _nodes[i] /= max;
-            }
-
-            Minimum = min;
-            Maximum = max;
+            _nodes.MapInplace(v => v / Maximum);
         }
 
         /// <summary>
@@ -89,13 +71,7 @@ namespace HexGenSharp
         /// <param name="minimum">The minimum limit for values.</param>
         public void ClampFloorTo(double minimum)
         {
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                if (_nodes[i] < minimum)
-                {
-                    _nodes[i] = minimum;
-                }
-            }
+            _nodes.MapInplace(v => Math.Max(v, minimum));
         }
 
         /// <summary>
@@ -104,13 +80,7 @@ namespace HexGenSharp
         /// <param name="minimum">The maximum limit for values.</param>
         public void ClampCeilingTo(double maximum)
         {
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                if (_nodes[i] > maximum)
-                {
-                    _nodes[i] = maximum;
-                }
-            }
+            _nodes.MapInplace(v => Math.Min(v, maximum));
         }
 
         /// <summary>
@@ -118,10 +88,7 @@ namespace HexGenSharp
         /// </summary>
         public void Square()
         {
-            for (int i = 0; i < _nodes.Length; ++i)
-            {
-                _nodes[i] *= _nodes[i];
-            }
+            _nodes.MapInplace(v => v * v);
         }
     }
 }

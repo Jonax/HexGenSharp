@@ -30,13 +30,6 @@ namespace HexGenSharp
 
         public WindSim(World w, uint length, uint width, uint height)
         {
-            Debug.Assert(w != null, "NULL world pointer");
-            Debug.Assert(length > 0, "size.X must be > 0");
-            Debug.Assert(width > 0, "size.Y must be > 0");
-            Debug.Assert(height > 0, "size.Z must be > 0");
-
-            Size xy = new Size((int)length, (int)width);
-
             this.world = w;
             this.gridLength = length;
             this.gridWidth= width;
@@ -49,13 +42,26 @@ namespace HexGenSharp
 
             /* 2D buffers for sampling information from the world map at a lower
              * resolution */
-            elevation = new Doubles2D(xy);
-            sunlight = new Doubles2D(xy);
-            albedo = new Doubles2D(xy);
+            elevation = new Doubles2D(length, width);
+            sunlight = new Doubles2D(length, width);
+            albedo = new Doubles2D(length, width);
+        }
 
-            Debug.Assert(elevation != null, "Doubles2DInit_elevation");
-            Debug.Assert(sunlight != null, "Doubles2DInit_sunlight");
-            Debug.Assert(albedo != null, "Doubles2DInit_albedo");
+        public static WindSim Create(World w, uint length, uint width, uint height)
+        {
+            // JW: Moving asserts here for future replacement for exceptions.  
+            Debug.Assert(w != null, "NULL world pointer");
+            Debug.Assert(length > 0, "size.X must be > 0");
+            Debug.Assert(width > 0, "size.Y must be > 0");
+            Debug.Assert(height > 0, "size.Z must be > 0");
+
+            WindSim result = new WindSim(w, length, width, height);
+
+            Debug.Assert(result.elevation != null, "Doubles2DInit_elevation");
+            Debug.Assert(result.sunlight != null, "Doubles2DInit_sunlight");
+            Debug.Assert(result.albedo != null, "Doubles2DInit_albedo");
+
+            return result;
         }
 
         void InitCells()
@@ -110,7 +116,6 @@ namespace HexGenSharp
                         altitude,
                         0.15 * width * height * depth, // air mass kg
                         273.15, // temperature in Kelvin (0 C)
-                        0.0, // moisture kg
                         new DenseVector(new[] { width, height, depth }) // m*m*m
                     );
                 }
@@ -174,7 +179,7 @@ namespace HexGenSharp
             Windcell cell = AtZI(z, i);
 
             double re = world.Planet.Radius;
-            double altitude = cell.altitude;
+            double altitude = cell.Altitude;
 
             // Gravity at altitude by the inverse square law
             // JW: Used a Math.Pow here rather than the usual x*x for convenience.  
@@ -182,13 +187,13 @@ namespace HexGenSharp
             double gravity = world.Planet.Gravity * Math.Pow(re / (re + altitude), 2);
 
             // Cell weight by F=ma
-            cell.weight = cell.mass * gravity;
+            cell.Weight = cell.Mass * gravity;
 
             // Pressure by surface area
             double pressure = cell.Pressure;
-            double area_force_z = pressure * (cell.dimension[0] * cell.dimension[1]);
-            cell.force_up = area_force_z;
-            cell.force_down = area_force_z + cell.weight;
+            double area_force_z = pressure * (cell.Dimension[0] * cell.Dimension[1]);
+            cell.UpwardForce = area_force_z;
+            cell.DownwardForce = area_force_z + cell.Weight;
         }
 
 
@@ -202,7 +207,7 @@ namespace HexGenSharp
                 Windcell floorcell = AtZI(z, i);
                 // JW: Annoying that Vector3D attributes are read-only.  Move to an 
                 // alternative with read-write?
-                floorcell.velocity.At(2, Math.Max(floorcell.velocity.At(2), 0.0));
+                floorcell.Velocity.At(2, Math.Max(floorcell.Velocity.At(2), 0.0));
 
                 // steps are evaluated from in order from z to z-1.
                 // shere z=0, there is no z-1.
@@ -214,7 +219,7 @@ namespace HexGenSharp
 
             Windcell from, to;
 
-            double force = (above.force_down - below.force_up);
+            double force = (above.DownwardForce - below.UpwardForce);
 
             // JW: General gist; make sure the changes below actually 
             // apply to "from" & "to", and not just apply them to copies.  
@@ -233,15 +238,15 @@ namespace HexGenSharp
             
             // JW: Annoying that Vector3D attributes are read-only.  Move to an 
             // alternative with read-write?
-            from.velocity.At(2, from.velocity.At(2) + (force / from.mass));
-            to.velocity.At(2, to.velocity.At(2) + (force / to.mass));
+            from.Velocity.At(2, from.Velocity.At(2) + (force / from.Mass));
+            to.Velocity.At(2, to.Velocity.At(2) + (force / to.Mass));
         }
 
         void StepMass(uint z, uint i)
         {
             // Transfer of mass and momentum due to velocity
             Windcell from = AtZI(z, i);
-            double transfer = from.mass * from.velocity[2] * from.dimension_reciprocal[2];
+            double transfer = from.Mass * from.Velocity[2] * (1.0 / from.Dimension.At(2));
 
             if (transfer > 0.0 && z == 0)
                 return;
@@ -265,16 +270,16 @@ namespace HexGenSharp
             // when transferring mass, it is travelling at a velocity
             // so we want to transfer momentum to a cell
             // p = mv
-            double momentum1 = Math.Abs(transfer) * from.velocity.At(2);
-            double momentum2 = to.mass * to.velocity.At(2);
-            to.velocity.At(2, to.velocity.At(2) + ((momentum1 + momentum2) / to.mass));
+            double momentum1 = Math.Abs(transfer) * from.Velocity.At(2);
+            double momentum2 = to.Mass * to.Velocity.At(2);
+            to.Velocity.At(2, to.Velocity.At(2) + ((momentum1 + momentum2) / to.Mass));
 
             // and an equal force in the opposite direction accordingly
-            momentum2 = from.mass * from.velocity.At(2);
-            from.velocity.At(2, from.velocity.At(2) - ((momentum1 + momentum2) / from.mass));
+            momentum2 = from.Mass * from.Velocity.At(2);
+            from.Velocity.At(2, from.Velocity.At(2) - ((momentum1 + momentum2) / from.Mass));
 
-            from.mass -= Math.Abs(transfer);
-            to.mass += Math.Abs(transfer);
+            from.Mass -= Math.Abs(transfer);
+            to.Mass += Math.Abs(transfer);
         }
 
 

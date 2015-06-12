@@ -39,29 +39,27 @@ namespace HexGenSharp.ExampleApplication
             //MurmurHash3 murmur = new MurmurHash3(seed: timestamp, hashSize: 128);
             SimplexNoise noiseGen = new SimplexNoise(data);
 
-            World testWorld = new World(new Size(4800, 2700), noiseGen, mask: new MaskBase())
+            World testWorld = new World(4800, 2700, noiseGen, mask: new MaskBase());
+            testWorld.SeaProportion = config.Value<double>("sea_proportion");
+            testWorld.SeaLevel = config.Value<double>("sea_level");
+            testWorld.Planet = new World.PlanetConfig
             {
-                SeaProportion = config.Value<double>("sea_proportion"),
-                SeaLevel = config.Value<double>("sea_level"),
-                Planet = new World.PlanetConfig
-                {
-                    Radius = Convert.ToDouble(config["planet"]["radius"]),     // in metres e.g. 6371000.0
-                    Gravity = Convert.ToDouble(config["planet"]["gravity"]),   // gravity at surface, in e.g. 9.81 m/s^-2
-                    DistanceFromSun = Convert.ToDouble(config["planet"]["distance_from_sun"]),  // in astronomical units e.g. 1.0 AU for Earth
-                    SolarLuminosity = Convert.ToDouble(config["planet"]["solar_luminosity"])  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
-                },
-                Area = new World.AreaConfig
-                {
-                    Center = availableLocations["UK"],
-                    Dimension = new DenseVector(config["area"]["dimension"].Children()
+                Radius = Convert.ToDouble(config["planet"]["radius"]),     // in metres e.g. 6371000.0
+                Gravity = Convert.ToDouble(config["planet"]["gravity"]),   // gravity at surface, in e.g. 9.81 m/s^-2
+                DistanceFromSun = Convert.ToDouble(config["planet"]["distance_from_sun"]),  // in astronomical units e.g. 1.0 AU for Earth
+                SolarLuminosity = Convert.ToDouble(config["planet"]["solar_luminosity"])  // normalised relative to our sun. 1.0 => 3.846×10^26 Watts
+            };
+            testWorld.Area = new World.AreaConfig
+            {
+                Center = availableLocations["UK"],
+                Dimension = new DenseVector(config["area"]["dimension"].Children()
                                                                            .Select(jt => Convert.ToDouble(jt))
                                                                            .ToArray())
-                },
-                Season = new World.SeasonConfig
-                {
-                    AxialTilt = Convert.ToDouble(config["season"]["seasonal_tile_earth"]),    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
-                    NorthernSolstice = Convert.ToDouble(config["season"]["northern_solstice_earth"])  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
-                },
+            };
+            testWorld.Season = new World.SeasonConfig
+            {
+                AxialTilt = Convert.ToDouble(config["season"]["seasonal_tile_earth"]),    // degrees - severity of seasons (-180 to 180; Earth is 23.5)
+                NorthernSolstice = Convert.ToDouble(config["season"]["northern_solstice_earth"])  // point in orbit (0.0 to 1.0) where this occurs (Earth is at 0.222)
             };
 
             int numAttempts = 5;
@@ -73,7 +71,7 @@ namespace HexGenSharp.ExampleApplication
 
                 //data = murmur.ComputeHash(data);
 
-                WindSim windSim = new WindSim(testWorld, 4, 4, 24);
+                WindSim windSim = new WindSim(testWorld, length: 4, width: 4, height: 24);
                 windSim.Run(100);
 
                 if (!Directory.Exists("results"))

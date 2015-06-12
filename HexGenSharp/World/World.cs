@@ -95,20 +95,24 @@ namespace HexGenSharp
 
 		private IMask mask;
 
-        public World(Size size, SimplexNoise noise, IMask mask = null)
+        public World(uint width, uint height, SimplexNoise noise, IMask mask)
         {
-			Debug.Assert(size.Width > 0, "Bad size");
-			Debug.Assert(size.Height > 0, "Bad size");
-
             this.noise = noise;
 
-			_elevation = new Doubles2D(size);
-			_sunlight = new Doubles2D(size);
-
-			this.mask = mask ?? new MaskBase();
+			_elevation = new Doubles2D(width, height);
+			_sunlight = new Doubles2D(width, height);
 		}
 
-		public void ApplyNoise(
+        public static World Create(uint width, uint height, SimplexNoise noise, IMask mask = null)
+        {
+            // JW: Moving asserts here for future replacement for exceptions.  
+            Debug.Assert(width > 0, "Bad size");
+            Debug.Assert(height > 0, "Bad size");
+
+            return new World(width, height, noise, mask ?? new MaskBase());
+        }
+
+        public void ApplyNoise(
 			double energy,			// 0.6 to 3.0.  Higher == more islands
 			double turbulance)		// -0.5 to 1.0. Controls shape and contrast
 		{
