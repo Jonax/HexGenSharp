@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Numerics;
+using System.Diagnostics;
 using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HexGenSharp
@@ -36,15 +37,15 @@ namespace HexGenSharp
             double altitude,     // m
             double mass,         // kg
             double temperature,  // K
-            Vector dimension)  // m*m*m
+            Vector<double> dimension)  // m*m*m
         {
             Debug.Assert(altitude >= 0, "altitude must be positive");
             Debug.Assert(mass >= 0, "mass must be positive");
             Debug.Assert(temperature >= 0, "temperature must be positive (Kelvin)");
 
-            Debug.Assert(dimension.At(0) >= 0, "dimension.x must be positive");
-            Debug.Assert(dimension.At(1) >= 0, "dimension.y must be positive");
-            Debug.Assert(dimension.At(2) >= 0, "dimension.z must be positive");
+            Debug.Assert(dimension[0] >= 0, "dimension.x must be positive");
+            Debug.Assert(dimension[1] >= 0, "dimension.y must be positive");
+            Debug.Assert(dimension[2] >= 0, "dimension.z must be positive");
 
             Dimension = DenseVector.Create(3, 0.0);
             Velocity = DenseVector.Create(3, 0.0);

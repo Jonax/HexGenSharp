@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MathNet.Numerics.LinearAlgebra.Double;
+using System.Numerics;
 
 namespace HexGenSharp
 {
@@ -93,14 +94,14 @@ namespace HexGenSharp
                 double width = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.At(0) / gridLength,
+                    world.Area.Dimension[0] / gridLength,
                     altitude
                 );
 
                 double height = TriangleExtendedOpposite
                 (
                     world.Planet.Radius,
-                    world.Area.Dimension.At(1) / gridWidth,
+                    world.Area.Dimension[1] / gridWidth,
                     altitude
                 );
 
@@ -116,7 +117,7 @@ namespace HexGenSharp
                         altitude,
                         0.15 * width * height * depth, // air mass kg
                         273.15, // temperature in Kelvin (0 C)
-                        new DenseVector(new[] { width, height, depth }) // m*m*m
+                        new Vector<double>(new[] { width, height, depth }) // m*m*m
                     );
                 }
 

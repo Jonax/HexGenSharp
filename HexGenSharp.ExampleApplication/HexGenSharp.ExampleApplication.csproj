@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>HexGenSharp.ExampleApplication</RootNamespace>
     <AssemblyName>HexGenSharp.ExampleApplication</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -37,12 +37,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MathNet.Numerics">
-      <HintPath>packages\MathNet.Numerics.3.0.2\lib\net40\MathNet.Numerics.dll</HintPath>
-    </Reference>
-    <Reference Include="MathNet.Spatial">
-      <HintPath>packages\MathNet.Spatial.0.2.0-alpha\lib\net40\MathNet.Spatial.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -50,19 +44,14 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Device" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors">
+      <HintPath>..\packages\System.Numerics.Vectors.4.1.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data.HashFunction.Core">
-      <HintPath>packages\System.Data.HashFunction.Core.1.6.1.0\lib\net45\System.Data.HashFunction.Core.dll</HintPath>
-    </Reference>
     <Reference Include="System.Data.HashFunction.MurmurHash">
       <HintPath>packages\System.Data.HashFunction.MurmurHash.1.6.1.0\lib\net45\System.Data.HashFunction.MurmurHash.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Data.HashFunction.MurmurHash">
-      <HintPath>packages\System.Data.HashFunction.MurmurHash.1.6.1.0\lib\net45\System.Data.HashFunction.MurmurHash.dll</HintPath>
-    </Reference>
-    <Reference Include="Magick.NET-x64">
-      <HintPath>packages\Magick.NET-Q16-x64.7.0.0.0011\lib\net40-client\Magick.NET-x64.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />

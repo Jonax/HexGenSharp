@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 
 using ImageMagick;
@@ -46,7 +45,7 @@ namespace HexGenSharp
             // Using RGB so 3 (C version uses RGBA so 4)
             using (MagickImage image = new MagickImage(MASK_COLOUR, (int)_elevation.Width, (int)_elevation.Height))
             {
-                image.GetWritablePixels().Set(pixels.ToArray());
+                image.GetPixels().Set(pixels.ToArray());
 
                 image.Format = MagickFormat.Png32;
 
@@ -88,7 +87,7 @@ namespace HexGenSharp
             // Using RGB so 3 (C version uses RGBA so 4)
             using (MagickImage image = new MagickImage(MASK_COLOUR, (int)_sunlight.Width, (int)_sunlight.Height))
             {
-                image.GetWritablePixels().Set(pixels.ToArray());
+                image.GetPixels().Set(pixels.ToArray());
 
                 image.Format = MagickFormat.Png32;
 

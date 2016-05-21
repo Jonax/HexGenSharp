@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Device.Location;
-using MathNet.Spatial.Euclidean;
-using MathNet.Numerics.LinearAlgebra.Double;
+using System.Diagnostics;
+using System.Linq;
 using HexGenSharp.Extensions;
+using System.Numerics;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HexGenSharp
 {
@@ -25,7 +21,7 @@ namespace HexGenSharp
         public class AreaConfig
         {
             public GeoCoordinate Center { get; set; }       // xy center of map on sphere
-            public Vector Dimension { get; set; }        // surface width from top/bottom, left/right, floor/ceil
+            public Vector<double> Dimension { get; set; }        // surface width from top/bottom, left/right, floor/ceil
         }
 
         public class SeasonConfig
@@ -59,15 +55,15 @@ namespace HexGenSharp
             set
             {
                 Debug.Assert(value.Center != null, "geocoordinate invalid");
-                Debug.Assert(value.Dimension.At(0) > 0.0, "dimension.x must be > 0");
-                Debug.Assert(value.Dimension.At(1) > 0.0, "dimension.y must be > 0");
-                Debug.Assert(value.Dimension.At(2) > 0.0, "dimension.z must be > 0");
+                Debug.Assert(value.Dimension[0] > 0.0, "dimension.x must be > 0");
+                Debug.Assert(value.Dimension[1] > 0.0, "dimension.y must be > 0");
+                Debug.Assert(value.Dimension[2] > 0.0, "dimension.z must be > 0");
                 Debug.Assert(Planet != null, "WorldDefinePlanet first");
 
                 double circumference = 2.0 * Math.PI * Planet.Radius;
-                Debug.Assert(circumference >= value.Dimension.At(0), "dimension.x is too large for the planet radius");
-                Debug.Assert(circumference >= value.Dimension.At(1), "dimension.y is too large for the planet radius");
-                Debug.Assert(value.Dimension.At(2) <= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
+                Debug.Assert(circumference >= value.Dimension[0], "dimension.x is too large for the planet radius");
+                Debug.Assert(circumference >= value.Dimension[1], "dimension.y is too large for the planet radius");
+                Debug.Assert(value.Dimension[2] <= 50 * 1000.0, "dimension.z is too large for an atmosphere simulation");
 
                 _area = value;
             }
@@ -345,7 +341,7 @@ namespace HexGenSharp
                 Planet.DistanceFromSun,
                 Planet.SolarLuminosity,
 				Area.Center,
-                Area.Dimension.At(0)
+                Area.Dimension[0]
 			);
 		}
 

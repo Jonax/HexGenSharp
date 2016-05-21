@@ -1,15 +1,10 @@
-﻿using MathNet.Numerics.LinearAlgebra.Double;
-using System;
-using System.Data.HashFunction;
+﻿using System;
+using System.Collections.Generic;
 using System.Device.Location;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using HexGenSharp;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Numerics;
 using Newtonsoft.Json.Linq;
-using System.Drawing;
 
 namespace HexGenSharp.ExampleApplication
 {
@@ -24,12 +19,12 @@ namespace HexGenSharp.ExampleApplication
             JObject config = JObject.Parse(File.ReadAllText("config.json"));
 
             Dictionary<string, GeoCoordinate> availableLocations = config["available_locations"].ToDictionary(kv => (kv as JProperty).Name,
-                                                                                                            kv =>
-                                                                                                            {
-                                                                                                                double[] coords = ((kv as JProperty).Value as JArray).Select(v => Convert.ToDouble(v)).ToArray();
+                                                                                                              kv =>
+                                                                                                              {
+                                                                                                                  double[] coords = ((kv as JProperty).Value as JArray).Select(v => Convert.ToDouble(v)).ToArray();
                                                                                                                 
-                                                                                                                return new GeoCoordinate(coords[0], coords[1]);
-                                                                                                            });
+                                                                                                                  return new GeoCoordinate(coords[0], coords[1]);
+                                                                                                              });
 
             byte[] data = new byte[512];
 
@@ -52,9 +47,9 @@ namespace HexGenSharp.ExampleApplication
             testWorld.Area = new World.AreaConfig
             {
                 Center = availableLocations["UK"],
-                Dimension = new DenseVector(config["area"]["dimension"].Children()
-                                                                           .Select(jt => Convert.ToDouble(jt))
-                                                                           .ToArray())
+                Dimension = new Vector<double>(config["area"]["dimension"].Children()
+                                                                          .Select(jt => Convert.ToDouble(jt))
+                                                                          .ToArray())
             };
             testWorld.Season = new World.SeasonConfig
             {
